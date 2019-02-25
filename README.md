@@ -6,7 +6,7 @@
 
 [O2A](https://www.awi.de/data-flow) consists of a comprehensive set of solutions designed to support users in their scientific workflows.  Among other tasks, we are dedicated to publish examples of analysis tools for supporting direct access to various backends (flat files, relational databases, hadoop, etc).
 
-The "o2a-data-dws" specifically provides examples on how to access data services for the purpose of dowload, perform basic analysis and visualize NRT data displayed in [DASHBOARD](https://dashboard.awi.de) using Jupyter Notebooks.  The devices and sensors generating data are described in [SENSOR](https://sensor.awi.de)
+The "o2a-data-dws" specifically provides examples on how to access data services for the purpose of dowload, perform basic analysis and visualize NRT data displayed in [DASHBOARD](https://dashboard.awi.de) using Jupyter Notebooks.  The devices and sensors generating data are described in [SENSOR](https://sensor.awi.de).
 
 
 
@@ -17,8 +17,8 @@ In this section we list all examples which have been developed so far. The list 
 
 Example | Description 
 --- | --- 
-[Example 1](dws-py-intro.ipynb) | Analytics and visualization of NRT temperature data from various sensors extracted from Svalbard Station.  In python.
-[Example 2](dws-r-intro.ipynb) |  Analytics and visualization of NRT temperature data from various sensors extracted from Svalbard Station.  In R.
+[Example in PY](dws-py-intro.ipynb) | Analytics and visualization of NRT temperature data from various sensors extracted from Svalbard Station.  .
+[Example in R](dws-r-intro.ipynb) |  Analytics and visualization of NRT temperature data from various sensors extracted from Svalbard Station.  
 [WS](dws.R) |  Data web services in R.
 [WS](dws.py) |  Data web services in python
 
