@@ -6,7 +6,7 @@
 
 [O2A](https://www.awi.de/data-flow) consists of a comprehensive set of solutions designed to support users in their scientific workflows.  Among other tasks, we are dedicated to publish examples of analysis tools for supporting direct access to various backends (flat files, relational databases, hadoop, etc).
 
-The "o2a-data-dws" specifically provides examples on how to access data services for the purpose of dowload, perform basic analysis and visualize NRT data displayed in [DASHBOARD](https://dashboard.awi.de) using Jupyter Notebooks.  The devices and sensors generating data are described in [SENSOR](https://sensor.awi.de).
+The "o2a-data-dws" specifically provides examples in R and python on how to access data services for the purpose of dowload, analysis and visualization og near real-time data displayed in [DASHBOARD](https://dashboard.awi.de) using Jupyter Notebooks.  The devices and sensors generating data are described in detail under [SENSOR](https://sensor.awi.de).
 
 
 
