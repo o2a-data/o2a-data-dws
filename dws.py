@@ -1,10 +1,10 @@
 '''
-
-
 python -m pip install pandas
 '''
+
 from _io import StringIO
 from datetime import date
+import os.path
 import json
 import urllib
 
@@ -218,7 +218,7 @@ class dws:
             raise Exception('Code is to short and cannot be resolved to a platform code.')
         
         base = ':'.join(parts[0:2])
-        url = dws.SENSOR_BASE_URL + '/sensors/device/getDeviceByUrn/' + urllib.parse.quote_plus(base)
+        url = dws.SENSOR_BASE_URL + '/sensors/item/getItemByUrn/' + urllib.parse.quote_plus(base)
         response = requests.get(url, stream = True)
         
         if response.status_code != 200:
@@ -243,19 +243,58 @@ class dws:
     def meta(code: str):
         platform = dws.platform(code)
         
+        identifier = platform['id']
+        filename = str(identifier) + '.json'
+        
+        # json
+        j = None
+        
+        
+        # check last modified
+        lastModified = None
+        try:
+            if os.path.isfile(filename):
+                with open(filename, 'r') as f:
+                    j = json.load(f)
+                    lastModified = j['lastModified']
+        except:
+            pass
+        
+        
+        # request metadata
         url = dws.SENSOR_BASE_URL + \
-            '/sensors/device/getDetailedItem/' + str(platform['id']) + \
+            '/sensors/item/getDetailedItem/' + str(identifier) + \
             '?includeChildren=true'
+
+        if lastModified:
+            url += '&pointInTime=' + lastModified
+        
+        #print('Requesting ' + url)
+    
         response = requests.get(url, stream = True)
         
-        if response.status_code != 200:
+        
+        if response.status_code == 200:
+            j = json.loads(response.content)
+
+            # cache content
+            try:
+                with open(filename, 'wb') as f:
+                    f.write(response.content)
+            except:
+                pass
+
+        elif response.status_code == 204:
+            pass
+        
+        elif response.status_code != 200:
             raise Exception('Error loading detailed platform metadata.')
         
-        j = json.loads(response.content)
         
-        r = dws._parseItems(j['childItem'])
-        platform['children'] = r['items']
-        platform['map'] = r['map']
+        # parse json
+        map = dws._parseItems([j])
+        platform['children'] = map['items']
+        platform['map'] = map['map']
         
         return platform
         
@@ -300,8 +339,9 @@ class dws:
         map = {}
         
         for sensorItem in sensorItems:
+            identifier = sensorItem['ID'] if 'ID' in sensorItem else sensorItem['id']
             item = {
-                'id': sensorItem['ID'],
+                'id': identifier,
                 'code': sensorItem['urn'],
                 'shortName': sensorItem['shortName'],
                 'longName': sensorItem['longName'],
@@ -310,46 +350,50 @@ class dws:
             }
         
             parameters = []
-            for sensorOutputItem in sensorItem['sensorOutput_Item']:
-                sensorOutput = sensorOutputItem['sensorOutput']
-                parameter = {
-                    'id': sensorOutput['id'],
-                    'name': sensorOutput['name'],
-                    'code': sensorOutput['shortname'] if sensorOutput['shortname'] != '' else sensorOutput['name'],
-                    'type':  sensorOutput['sensorOutputType']['generalName'],
-                    'description':  sensorOutput['sensorOutputType']['description'],
-                    'definition':  sensorOutput['sensorOutputType']['vocableValue'],
-                    'unit':  sensorOutput['unitOfMeasurement']['code']
-                }
-                
-                
-                properties = []
-                propertyMap = {}
-                if 'measurementPropertySensorOutputs' in sensorOutput:
-                    for sensorProperty in sensorOutput['measurementPropertySensorOutputs']:
-                        property = {
-                            'name': sensorProperty['measurementProperty']['measurementName'],
-                            'lower': sensorProperty['measurementProperty']['lowerBound'],
-                            'upper': sensorProperty['measurementProperty']['upperBound'],
-                            'unit': sensorProperty['measurementProperty']['unitOfMeasurement']['code']
-                        }
-                        
-                        properties.append(property)
-                        propertyMap[property["name"].lower().replace(' ', '_')] = property
-                
-                parameter['properties'] = properties
-                parameters.append(parameter)
-                
-                code = item['code'] + ':' + parameter['code']
-                map[code] = parameter
-                map[code]['properties'] = propertyMap
+            if 'sensorOutput_Item' in sensorItem:
+                for sensorOutputItem in sensorItem['sensorOutput_Item']:
+                    sensorOutput = sensorOutputItem['sensorOutput']
+                    parameter = {
+                        'id': sensorOutput['id'],
+                        'name': sensorOutput['name'],
+                        'code': sensorOutput['shortname'] if sensorOutput['shortname'] != '' else sensorOutput['name'],
+                        'type':  sensorOutput['sensorOutputType']['generalName'],
+                        'description':  sensorOutput['sensorOutputType']['description'],
+                        'definition':  sensorOutput['sensorOutputType']['vocableValue'],
+                        'unit':  sensorOutput['unitOfMeasurement']['code']
+                    }
+                    
+                    
+                    properties = []
+                    propertyMap = {}
+                    if 'measurementPropertySensorOutputs' in sensorOutput:
+                        for sensorProperty in sensorOutput['measurementPropertySensorOutputs']:
+                            property = {
+                                'name': sensorProperty['measurementProperty']['measurementName'],
+                                'lower': sensorProperty['measurementProperty']['lowerBound'],
+                                'upper': sensorProperty['measurementProperty']['upperBound'],
+                                'unit': sensorProperty['measurementProperty']['unitOfMeasurement']['code']
+                            }
+                            
+                            properties.append(property)
+                            propertyMap[property["name"].lower().replace(' ', '_')] = property
+                    
+                    parameter['properties'] = properties
+                    parameters.append(parameter)
+                    
+                    code = item['code'] + ':' + parameter['code']
+                    map[code] = parameter
+                    map[code]['properties'] = propertyMap
 
             items.append(item)
             
-            
-            r = dws._parseItems(sensorItem['childItem'])
-            item['children'] = r['items']
-            map = {**map, **r['map']}
+
+            if 'childItem' in sensorItem:
+                r = dws._parseItems(sensorItem['childItem'])
+                item['children'] = r['items']
+                map.update(r['map'])
+                
+#            map = {**map, **r['map']}
         
         r = {
             'items': items,
