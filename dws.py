@@ -200,11 +200,11 @@ class dws:
 
             properties[name] = {
                 'id': i['id'],
-				'name': i['measurementName'].lower().replace(' ', '_'),													   
+                'name': i['measurementName'].lower().replace(' ', '_'),													   
                 'lower': i['lowerBound'],
                 'upper': i['upperBound'],
                 'unit': i['unitOfMeasurement']['code'],
-				'type': i['measurementPropertyType']['generalName']												   
+                'type': i['measurementPropertyType']['generalName']												   
             }
         
         r['properties'] = properties
