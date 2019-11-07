@@ -196,8 +196,8 @@ class dws:
         
         properties = {}
         for i in j:
-			name = i['measurementPropertyType']['generalName'].lower().replace(' ', '_')
-														  
+            name = i['measurementPropertyType']['generalName'].lower().replace(' ', '_')
+
             properties[name] = {
                 'id': i['id'],
 				'name': i['measurementName'].lower().replace(' ', '_'),													   
@@ -255,16 +255,15 @@ class dws:
         
         # check last modified
         lastModified = None
-		if cache:
-			try:
-				if os.path.isfile(filename):
-					with open(filename, 'r') as f:
-						j = json.load(f)
-						lastModified = j['lastModified']
-			except:
-				pass
-        
-        
+        if cache:
+            try:
+                if os.path.isfile(filename):
+                    with open(filename, 'r') as f:
+                        j = json.load(f)
+                        lastModified = j['lastModified']
+            except:
+                pass
+
         # request metadata
         url = dws.SENSOR_BASE_URL + \
             '/sensors/item/getDetailedItem/' + str(identifier) + \
@@ -281,13 +280,13 @@ class dws:
         if response.status_code == 200:
             j = json.loads(response.content)
 
-			# cache content
+        # cache content
             if cache:
-				try:
-					with open(filename, 'wb') as f:
-						f.write(response.content)
-				except:
-					pass
+                try:
+                    with open(filename, 'wb') as f:
+                        f.write(response.content)
+                except:
+                    pass
 
         elif response.status_code == 204:
             pass
