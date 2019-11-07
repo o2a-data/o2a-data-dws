@@ -96,7 +96,7 @@ class dws:
             raise Exception('Error loading data.'.format(response.reason))
 
         # build the data frame
-        df = pd.read_csv(StringIO(response.content.decode('UTF-8')), sep = '\t')
+        df = pd.read_csv(StringIO(response.content), sep = '\t')
         df['datetime'] = pd.to_datetime(df['datetime'])
         return df
 
@@ -164,7 +164,7 @@ class dws:
             raise Exception('Error loading data.'.format(response.reason))
 
         # build the data frame
-        df = pd.read_csv(StringIO(response.content.decode('UTF-8')), sep = '\t')
+        df = pd.read_csv(StringIO(response.content), sep = '\t')
         df['datetime'] = pd.to_datetime(df['datetime'])
         return df
 
@@ -196,12 +196,15 @@ class dws:
         
         properties = {}
         for i in j:
-            name = i['measurementName'].lower().replace(' ', '_')
+			name = i['measurementPropertyType']['generalName'].lower().replace(' ', '_')
+														  
             properties[name] = {
                 'id': i['id'],
+				'name': i['measurementName'].lower().replace(' ', '_'),													   
                 'lower': i['lowerBound'],
                 'upper': i['upperBound'],
-                'unit': i['unitOfMeasurement']['code']
+                'unit': i['unitOfMeasurement']['code'],
+				'type': i['measurementPropertyType']['generalName']												   
             }
         
         r['properties'] = properties
@@ -240,7 +243,7 @@ class dws:
     
     
     @staticmethod
-    def meta(code: str):
+    def meta(code: str, cache=False):
         platform = dws.platform(code)
         
         identifier = platform['id']
@@ -252,13 +255,14 @@ class dws:
         
         # check last modified
         lastModified = None
-        try:
-            if os.path.isfile(filename):
-                with open(filename, 'r') as f:
-                    j = json.load(f)
-                    lastModified = j['lastModified']
-        except:
-            pass
+		if cache:
+			try:
+				if os.path.isfile(filename):
+					with open(filename, 'r') as f:
+						j = json.load(f)
+						lastModified = j['lastModified']
+			except:
+				pass
         
         
         # request metadata
@@ -277,12 +281,13 @@ class dws:
         if response.status_code == 200:
             j = json.loads(response.content)
 
-            # cache content
-            try:
-                with open(filename, 'wb') as f:
-                    f.write(response.content)
-            except:
-                pass
+			# cache content
+            if cache:
+				try:
+					with open(filename, 'wb') as f:
+						f.write(response.content)
+				except:
+					pass
 
         elif response.status_code == 204:
             pass
@@ -400,4 +405,47 @@ class dws:
             'map': map
         }
         return r
-    
+
+    @staticmethod
+    def get_events(code: str):
+        platform = dws.platform(code)
+
+        # assume the URL id is the same at SENSOR and DATA
+        url = dws.SENSOR_BASE_URL + '/sensors/events/getDeviceEvents/' + str(platform['id'])
+
+        response = requests.get(url, stream=True)
+
+        if response.status_code != 200:
+            raise Exception('Error loading detailed platform metadata.')
+
+        j = json.loads(response.content.decode('utf-8'))
+
+        r = dws._parseEvents(j)
+        platform['events'] = r['items']
+
+        return platform
+
+    @staticmethod
+    def _parseEvents(sensorItems: list):
+        items = []
+
+        sensorItems = [e['event'] for e in sensorItems]
+
+        for sensorItem in sensorItems:
+            item = {
+                'id': sensorItem['id'],
+                'startDate': sensorItem['startDate'],
+                'endDate': sensorItem['endDate'],
+                'label': sensorItem['label'],
+                'latitude': sensorItem['latitude'],
+                'longitude': sensorItem['longitude'],
+                'vocable': sensorItem['eventType']['vocableValue'],
+                'vocabulary': sensorItem['eventType']['vocabularyID'],
+            }
+
+            items.append(item)
+
+        r = {
+            'items': items,
+        }
+        return r
