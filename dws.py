@@ -376,11 +376,12 @@ class dws:
                                 'name': sensorProperty['measurementProperty']['measurementName'],
                                 'lower': sensorProperty['measurementProperty']['lowerBound'],
                                 'upper': sensorProperty['measurementProperty']['upperBound'],
-                                'unit': sensorProperty['measurementProperty']['unitOfMeasurement']['code']
+                                'unit': sensorProperty['measurementProperty']['unitOfMeasurement']['code'],
+                                'type': sensorProperty['measurementProperty']['measurementPropertyType']['generalName']
                             }
                             
                             properties.append(property)
-                            propertyMap[property["name"].lower().replace(' ', '_')] = property
+                            propertyMap[property["type"].lower().replace(' ', '_')] = property
                     
                     parameter['properties'] = properties
                     parameters.append(parameter)
