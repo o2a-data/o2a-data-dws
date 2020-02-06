@@ -408,11 +408,44 @@ class dws:
         return r
 
     @staticmethod
+    def base(code: str):
+        parts = code.split(':')
+
+        if len(parts) < 2:
+            raise Exception('Code is to short and cannot be resolved to a platform code.')
+
+        base = ':'.join(parts)
+        url = dws.SENSOR_BASE_URL + '/sensors/item/getItemByUrn/' + urllib.parse.quote_plus(base)
+        response = requests.get(url, stream=True)
+
+        if response.status_code != 200:
+            raise Exception('Error loading platform metadata.')
+
+        j = json.loads(response.content)
+
+        r = {
+            'id': j['ID'],
+            'code': j['urn'],
+            'shortName': j['shortName'],
+            'longName': j['longName'],
+            'description': j['description']
+        }
+
+        if len(parts) == 2:
+            r['definition'] = j['rootItemType']['vocableValue']
+        elif len(parts) > 2:
+            r['definition'] = j['subItemType']['vocableValue']
+
+        return r
+
+
+    @staticmethod
     def get_events(code: str):
-        platform = dws.platform(code)
+        # platform = dws.platform(code)
+        base = dws.base(code)
 
         # assume the URL id is the same at SENSOR and DATA
-        url = dws.SENSOR_BASE_URL + '/sensors/events/getDeviceEvents/' + str(platform['id'])
+        url = dws.SENSOR_BASE_URL + '/sensors/events/getDeviceEvents/' + str(base['id'])
 
         response = requests.get(url, stream=True)
 
@@ -422,9 +455,9 @@ class dws:
         j = json.loads(response.content.decode('utf-8'))
 
         r = dws._parseEvents(j)
-        platform['events'] = r['items']
+        base['events'] = r['items']
 
-        return platform
+        return base
 
     @staticmethod
     def _parseEvents(sensorItems: list):
@@ -450,3 +483,18 @@ class dws:
             'items': items,
         }
         return r
+
+    @staticmethod
+    def get_geolocation(code: str):
+
+        # code is the sensor name/url
+        events_list = dws.get_events(code)['events']
+        events_list = sorted(events_list, key=lambda i: i['endDate'], reverse=True)
+
+        latitude = events_list[0]['latitude']
+        longitude = events_list[0]['longitude']
+
+        geolocation = {'latitude' : latitude,
+                       'longitude': longitude}
+
+        return geolocation
