@@ -96,7 +96,8 @@ class dws:
             raise Exception('Error loading data.'.format(response.reason))
 
         # build the data frame
-        df = pd.read_csv(StringIO(response.content), sep = '\t')
+        df = pd.read_csv(StringIO(response.text), sep='\t')
+        # df = pd.read_csv(StringIO(response.content), sep = '\t')
         df['datetime'] = pd.to_datetime(df['datetime'])
         return df
 
