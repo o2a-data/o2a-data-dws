@@ -473,6 +473,7 @@ class dws:
                 'label': sensorItem['label'],
                 'latitude': sensorItem['latitude'],
                 'longitude': sensorItem['longitude'],
+                'elevation': sensorItem['elevationInMeter'],
                 'vocable': sensorItem['eventType']['vocableValue'],
                 'vocabulary': sensorItem['eventType']['vocabularyID'],
             }
@@ -485,16 +486,29 @@ class dws:
         return r
 
     @staticmethod
-    def get_geolocation(code: str):
-
+    def get_geolocation(code: str, vocable_list = None):
         # code is the sensor name/url
-        events_list = dws.get_events(code)['events']
-        events_list = sorted(events_list, key=lambda i: i['endDate'], reverse=True)
 
+        events_list = dws.get_events(code)['events']
+
+        # subset by event type / vocable
+        if vocable_list is not None:
+            j = []
+            for i in range(0,len(events_list)):
+                if events_list[i]['vocable'] not in vocable_list:
+                    j.append(i)
+            for i in sorted(j, reverse=True):
+                del events_list[i]
+
+        # get the newest
+        events_list = sorted(events_list, key=lambda i: i['endDate'], reverse=True)
         latitude = events_list[0]['latitude']
         longitude = events_list[0]['longitude']
+        elevation = events_list[0]['elevation']
 
         geolocation = {'latitude' : latitude,
-                       'longitude': longitude}
+                       'longitude': longitude,
+                       'elevation': elevation
+                       }
 
         return geolocation
