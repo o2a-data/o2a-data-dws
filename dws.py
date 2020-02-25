@@ -506,9 +506,4 @@ class dws:
         longitude = events_list[0]['longitude']
         elevation = events_list[0]['elevation']
 
-        geolocation = {'latitude' : latitude,
-                       'longitude': longitude,
-                       'elevation': elevation
-                       }
-
-        return geolocation
+        return latitude, longitude, elevation
