@@ -502,8 +502,11 @@ class dws:
 
         # get the newest
         events_list = sorted(events_list, key=lambda i: i['endDate'], reverse=True)
-        latitude = events_list[0]['latitude']
-        longitude = events_list[0]['longitude']
-        elevation = events_list[0]['elevation']
+        if len(events_list) == 0:
+            return None, None, None
+        else:
+            latitude = events_list[0]['latitude']
+            longitude = events_list[0]['longitude']
+            elevation = events_list[0]['elevation']
 
         return latitude, longitude, elevation
