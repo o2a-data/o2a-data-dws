@@ -236,7 +236,7 @@ class dws:
             'shortName': j['shortName'],
             'longName': j['longName'],
             'description': j['description'],
-            'definition': j['rootItemType']['vocableValue']
+            'definition': j['rootItemType']['vocableValue'] if 'rootItemType' in j else j['subItemType']['vocableValue']
         }
         
         return r
