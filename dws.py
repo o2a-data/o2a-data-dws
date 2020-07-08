@@ -452,7 +452,7 @@ class dws:
         if response.status_code != 200:
             raise Exception('Error loading detailed platform metadata.')
 
-        j = json.loads(response.content.decode('utf-8'))
+        j = json.loads(response.content)
 
         r = dws._parseEvents(j)
         base['events'] = r['items']
