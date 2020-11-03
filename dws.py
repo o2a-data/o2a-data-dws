@@ -18,9 +18,8 @@ import datetime
 class dws:
     SENSOR_BASE_URL = 'https://sensor.awi.de/rest'
     DATA_BASE_URL = 'https://dashboard.awi.de/data-xxl/rest'
-   
-   
-   
+    SENSOR_DEV_URL = 'https://sandbox.sensor.awi.de/rest/'
+      
     @staticmethod
     def sensors(pattern: str = None):
         url = dws.DATA_BASE_URL + '/sensors'
@@ -172,8 +171,12 @@ class dws:
 
 
     @staticmethod
-    def sensor(code: str):
-        url = dws.SENSOR_BASE_URL + '/sensors/sensorOutputs/getSensorOutputByUrn/' + urllib.parse.quote_plus(code)
+    def sensor(code: str, sys = None):
+        if sys == 'dev':
+            url = dws.SENSOR_DEV_URL + '/sensors/sensorOutputs/getSensorOutputByUrn/' + urllib.parse.quote_plus(code)
+        else:
+            url = dws.SENSOR_BASE_URL + '/sensors/sensorOutputs/getSensorOutputByUrn/' + urllib.parse.quote_plus(code)
+            
         response = requests.get(url)
         
         if response.status_code != 200:
