@@ -1,5 +1,5 @@
 # dws.R
-# version 0.1
+# version 0.2
 # rkoppe
 
 if (!"jsonlite" %in% installed.packages()) install.packages("jsonlite")
@@ -16,7 +16,7 @@ dws.DATA_BASE_URL <- "https://dashboard.awi.de/data-xxl/rest"
 #' Loads availble sensors from the data service. The optional
 #' \code{pattern} allows * wildcards and can be used to search for sensors.
 #' 
-#' See https://dashboard.awi.de/data/ for documentation.
+#' See https://dashboard.awi.de/data-xxl/ for documentation.
 #' 
 dws.sensors <- function(pattern = NULL) {
   query = paste(
@@ -90,8 +90,8 @@ dws.get <- function(sensors, begin, end, aggregate = "hour", aggregateFunctions 
   )
   
   url = paste(dws.DATA_BASE_URL, "/data/bulk?format=text/tab-separated-values", sep = "")
-
   # request data
+  cat("Sent to download data:",url,j,sep = "","\n")
   r = POST(url, body = j, content_type_json())
   stop_for_status(r)
   c = content(r, "parsed", "text/plain", encoding = "UTF-8")
@@ -180,8 +180,6 @@ dws._get <- function(sensors, begin, end, aggregate = "hour", aggregateFunctions
   read.csv(query, sep = "\t", encoding = "UTF-8")
 }
 
-
-
 #' Loads basic sensor metadata for the given \code{code} from sensor.awi.de.
 #'
 dws.sensor <- function(code) {
@@ -248,7 +246,7 @@ dws.platform <- function(code) {
   
   # get the platform document
   query = paste(
-    dws.SENSOR_BASE_URL, "/sensors/device/getDeviceByUrn/",
+    dws.SENSOR_BASE_URL, "/sensors/item/getItemByUrn/",
     URLencode(base),
     sep = "")
   
@@ -274,37 +272,55 @@ dws.meta <- function(code) {
   
   # get the detailed document
   query = paste(
-    dws.SENSOR_BASE_URL, "/sensors/device/getDetailedItem/",
+    dws.SENSOR_BASE_URL, "/sensors/item/getDetailedItem/",
     platform$id,
     "?includeChildren=true",
     sep = "")
-  
+
   ls = readLines(query, warn = FALSE)
   j = fromJSON(ls)
   
   # parse children
-  r = dws.parseItems(j$childItem)
+  uuidMap = list()
+  r = dws.parseItems(j$childItem, uuidMap)
   platform["children"] = list(r$items)
+  platform["items"] = list(r$itemMap)
   
   # simple map for parameters and their properties
   platform["map"] = list(r$map)
 
   platform  
 }
-dws.parseItems <- function(sensorItems) {
+
+#' Parses the given sensor items and returns a simplified item object.
+#' 
+dws.parseItems <- function(sensorItems, uuidMap) {
   items = list()
+  itemMap = list()
   map = list()
+  
   for (i in 1:nrow(sensorItems)) {
     sensorItem = sensorItems[i,]
+    
+    if (is.character(sensorItem)) {
+      sensorItem = uuidMap[[sensorItem]]
+    } else {
+      uuidMap[[sensorItem[["@uuid"]]]] = sensorItem
+    }
 
     # basic infos
     item = list()
+    item["uuid"] = sensorItem[["@uuid"]]
     item["id"] = sensorItem$ID
     item["code"] = sensorItem$urn
     item["shortName"] = sensorItem$shortName
     item["name"] = sensorItem$longName
     item["description"] = sensorItem$description
     item["definition"] = sensorItem$rootItemType$vocableValue
+    item["manufacturer"] = sensorItem$manufacturer
+    item["model"] = sensorItem$model
+    item["serial"] = sensorItem$serialNumber
+
     
     # parameters
     parameters = list()
@@ -312,16 +328,43 @@ dws.parseItems <- function(sensorItems) {
     if (!is.null(sensorOutputs)) {
       for (j in 1:nrow(sensorOutputs)) {
         sensorOutput = sensorOutputs[j,]
-  #      print(paste("sensorOutput...", sensorOutput$id))
+        
+        if (is.character(sensorOutput)) {
+          sensorOutput = uuidMap[[sensorOutput]]
+        } else {
+          uuid = sensorOutput[["@uuid"]]
+          uuidMap[[uuid]] = sensorOutput
+        }
+        
         parameter = list()
         parameter["id"] = sensorOutput$id
+        parameter["uuid"] = sensorOutput[["@uuid"]]
         parameter["name"] = sensorOutput$name
         parameter["code"] = ifelse(sensorOutput$shortname != "", sensorOutput$shortname, sensorOutput$name)
+        
+        
+        # resolve type
+        if (is.character(sensorOutput$sensorOutputType[[1]])) {
+          sensorOutput$sensorOutputType = uuidMap[[sensorOutput$sensorOutputType[[1]]]]
+        } else {
+          uuid = sensorOutput$sensorOutputType[[1]][["@uuid"]]
+          uuidMap[[uuid]] = sensorOutput$sensorOutputType
+        }
         parameter["type"] = sensorOutput$sensorOutputType$generalName
         parameter["description"] = sensorOutput$sensorOutputType$description
         parameter["definition"] = sensorOutput$sensorOutputType$vocableValue
+        
+        
+        # resolve unit
+        if (is.character(sensorOutput$unitOfMeasurement[[1]])) {
+          sensorOutput$unitOfMeasurement = uuidMap[[sensorOutput$unitOfMeasurement[[1]]]]
+        } else {
+          uuid = sensorOutput$unitOfMeasurement[[1]][["@uuid"]]
+          uuidMap[[uuid]] = sensorOutput$unitOfMeasurement
+        }
         parameter["unit"] = sensorOutput$unitOfMeasurement$code
-  
+
+        
         # properties
         sensorProperties = sensorOutput$measurementPropertySensorOutput
 
@@ -334,7 +377,17 @@ dws.parseItems <- function(sensorItems) {
             property["name"] = sensorProperty$measurementProperty$measurementName
             property["lower"] = sensorProperty$measurementProperty$lowerBound
             property["upper"] = sensorProperty$measurementProperty$upperBound
+            
+            # unit
+            if (is.character(sensorProperty$measurementProperty$unitOfMeasurement)) {
+              sensorProperty$measurementProperty$unitOfMeasurement = uuidMap[[sensorProperty$measurementProperty$unitOfMeasurement]]
+            } else {
+              uuid = sensorProperty$measurementProperty$unitOfMeasurement[["@uuid"]]
+              uuidMap[[uuid]] = sensorProperty$measurementProperty$unitOfMeasurement
+            }
             property["unit"] = sensorProperty$measurementProperty$unitOfMeasurement$code
+
+            
             properties[[k]] = property
             
             propertyMap[gsub(" ", "_", tolower(property["name"]))] = list(property)
@@ -361,18 +414,21 @@ dws.parseItems <- function(sensorItems) {
     
     children = list()
     if (!is.null(sensorItem$childItem) && (length(sensorItem$childItem[[1]]) > 0)) {
-      r = dws.parseItems(sensorItem$childItem[[1]])
+      r = dws.parseItems(sensorItem$childItem[[1]], uuidMap)
       children = r$items
       map = c(map, r$map)
+      itemMap = c(itemMap, r$itemMap)
     }
     item["children"] = list(children)
     
     items[[i]] = item
+    itemMap[[item$code]] = item
   }
   
   list(
     map = map,
-    items = items
+    items = items,
+    itemMap = itemMap
   )
 }
 
@@ -412,4 +468,59 @@ dws.meta.sensorML <- function(code) {
   
   ls = readLines(query, warn = FALSE)
   ls
+}
+
+
+#' Outputs a summary of the given metadata and device/sensor identified with code.
+#' 
+dws.meta.summary <- function(code) {
+  meta <- dws.meta(code)
+  
+  if (missing(meta)) {
+    stop("Metadata is not defined.")
+  }
+  if (missing(code)) {
+    code = meta$code
+  }
+  
+  
+  # core platform information
+  cat("Platform\n")
+  cat("--------\n")
+  cat(paste(meta$name, " (", meta$code, ", id=", meta$id, ")", sep = ""), "\n")
+  cat(meta$description, "\n")
+  cat("\n")
+  
+  # device / sensor information
+  item = meta$items[[code]]
+  cat("Device / Sensor\n")
+  cat("---------------\n")
+  cat(paste(item$name, " (", item$code, ", id=", item$id, ")", sep = ""), "\n")
+  cat("Manufacturer:", item$manufacturer, "\n")
+  cat("Model:       ", item$model, "\n")
+  cat(item$description, "\n")
+  cat("\n")
+  
+  # all parameters per device
+  if (length(item$parameters) > 0) {
+    for (i in 1:length(item$parameters)) {
+      parameter = item$parameters[[i]]
+      cat("  ", parameter$name, "\n")
+      cat("  ------------------\n")
+      cat("  Type:    ", parameter$type, "\n")
+      cat("  Unit:    ", parameter$unit, "\n")
+      cat("  Properties:\n")
+      
+      properties = parameter$properties
+      if (length(properties) > 0) {
+        for (j in 1:length(properties)) {
+          property = properties[[j]]
+          cat("    ", property$name, ": ", property$lower, " <= value <= ", property$upper, "[", property$unit, "]\n")
+          
+        }
+      }
+      
+      cat("\n")
+    }
+  }
 }
