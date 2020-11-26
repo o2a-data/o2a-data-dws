@@ -8,10 +8,9 @@ import requests
 import urllib
 
 
-
 class dws:
     '''
-    This script abstracts access to metadata stored in sensor.awi.de and data 
+    This script abstracts access to metadata stored in sensor.awi.de and data
     available via the data web service (dws).
     Have a look to the documentation at https://spaces.awi.de/display/DM and
     the API descriptions https://sensor.awi.de/api/ and https://dashboard.awi.de/data-xxl/api/
@@ -19,7 +18,7 @@ class dws:
     SENSOR_BASE_URL = 'https://sensor.awi.de/rest'
     DATA_BASE_URL = 'https://dashboard.awi.de/data-xxl/rest'
     SENSOR_DEV_URL = 'https://sandbox.sensor.awi.de/rest/'
-      
+
     @staticmethod
     def sensors(pattern: str = None):
         '''
@@ -31,20 +30,19 @@ class dws:
         url = dws.DATA_BASE_URL + '/sensors'
         if pattern != None:
             url += '?pattern=' + pattern
-        
-        response = requests.get(url, stream = True)
-        
+
+        response = requests.get(url, stream=True)
+
         if response.status_code != 200:
             raise Exception('Error loading sensors.'.format(response.reason))
-        
+
         j = json.loads(response.content)
 
         return j
-        
-        
-        
+
     @staticmethod
-    def get(sensors, begin: date, end: date, aggregate: str = 'hour', aggregateFunctions: list = None, qualityFlags: list = None, withQualityFlags: bool = False, withLogicalCode: bool = False):
+    def get(sensors, begin: date, end: date, aggregate: str = 'hour', aggregateFunctions: list = None,
+            qualityFlags: list = None, withQualityFlags: bool = False, withLogicalCode: bool = False):
         '''
         Loads data from the data service for given sensors
         in the given time range and selected aggregate.
@@ -55,31 +53,31 @@ class dws:
 
         if begin == None:
             raise Exception('Begin timestamp must be defined.')
-        
+
         if end == None:
             raise Exception('End timestamp must be defined.')
-        
+
         if isinstance(sensors, str):
             sensors = [sensors]
-            
+
         if isinstance(begin, str):
             if len(begin) == 10:
                 begin = datetime.datetime.strptime(begin, '%Y-%m-%d')
             else:
                 begin = datetime.datetime.strptime(begin, '%Y-%m-%dT%H:%M:%S')
-                
+
         if isinstance(end, str):
             if len(end) == 10:
                 end = datetime.datetime.strptime(end, '%Y-%m-%d')
             else:
                 end = datetime.datetime.strptime(end, '%Y-%m-%dT%H:%M:%S')
-        
+
         if isinstance(aggregateFunctions, str):
             aggregateFunctions = [aggregateFunctions]
-            
+
         if qualityFlags != None and not isinstance(qualityFlags, list):
             qualityFlags = [qualityFlags]
-        
+
         request = {
             'sensors': sensors,
             'beginDate': begin.strftime('%Y-%m-%dT%H:%M:%S'),
@@ -87,21 +85,21 @@ class dws:
             'aggregate': aggregate.upper(),
             'format': 'text/tab-separated-values',
         }
-        
+
         if aggregateFunctions != None:
             request['aggregateFunctions'] = [a.upper() for a in aggregateFunctions]
-                
+
         if qualityFlags != None:
             request['qualityFlags'] = qualityFlags
-                
+
         if withQualityFlags:
             request['withQualityFlags'] = True
-            
+
         if withLogicalCode:
             request['withLogicalCode'] = True
-        
-        response = requests.post(dws.DATA_BASE_URL + '/data/bulk', json = request)
-        
+
+        response = requests.post(dws.DATA_BASE_URL + '/data/bulk', json=request)
+
         if response.status_code != 200:
             raise Exception('Error loading data.'.format(response.reason))
 
@@ -111,21 +109,20 @@ class dws:
         df['datetime'] = pd.to_datetime(df['datetime'])
         return df
 
-
     @staticmethod
-    def sensor(code: str, sys = None):
+    def sensor(code: str, sys=None):
         if sys == 'dev':
             url = dws.SENSOR_DEV_URL + '/sensors/sensorOutputs/getSensorOutputByUrn/' + urllib.parse.quote_plus(code)
         else:
             url = dws.SENSOR_BASE_URL + '/sensors/sensorOutputs/getSensorOutputByUrn/' + urllib.parse.quote_plus(code)
-            
+
         response = requests.get(url)
-        
+
         if response.status_code != 200:
             raise Exception('Error loading sensor metadata.')
-        
+
         j = json.loads(response.content)
-        
+
         r = {
             'id': j['id'],
             'name': j['name'],
@@ -134,47 +131,46 @@ class dws:
             'definition': j['sensorOutputType']['vocableValue'],
             'unit': j['unitOfMeasurement']['code'],
         }
-        
-        url = dws.SENSOR_BASE_URL + '/sensors/measurementProperties/getSensorOutputMeasurementProperties/' + str(r['id'])
+
+        url = dws.SENSOR_BASE_URL + '/sensors/measurementProperties/getSensorOutputMeasurementProperties/' + str(
+            r['id'])
         response = requests.get(url)
-        
+
         j = json.loads(response.content)
-        
+
         properties = {}
         for i in j:
             name = i['measurementPropertyType']['generalName'].lower().replace(' ', '_')
 
             properties[name] = {
                 'id': i['id'],
-                'name': i['measurementName'].lower().replace(' ', '_'),													   
+                'name': i['measurementName'].lower().replace(' ', '_'),
                 'lower': i['lowerBound'],
                 'upper': i['upperBound'],
                 'unit': i['unitOfMeasurement']['code'],
-                'type': i['measurementPropertyType']['generalName']												   
+                'type': i['measurementPropertyType']['generalName']
             }
-        
+
         r['properties'] = properties
-        
+
         return r
-        
-        
-    
+
     @staticmethod
     def platform(code: str):
         parts = code.split(':')
-        
+
         if len(parts) < 2:
             raise Exception('Code is to short and cannot be resolved to a platform code.')
-        
+
         base = ':'.join(parts[0:2])
         url = dws.SENSOR_BASE_URL + '/sensors/item/getItemByUrn/' + urllib.parse.quote_plus(base)
-        response = requests.get(url, stream = True)
-        
+        response = requests.get(url, stream=True)
+
         if response.status_code != 200:
             raise Exception('Error loading platform metadata.')
-        
+
         j = json.loads(response.content)
-        
+
         r = {
             'id': j['ID'],
             'code': j['urn'],
@@ -183,25 +179,22 @@ class dws:
             'description': j['description'],
             'definition': j['rootItemType']['vocableValue'] if 'rootItemType' in j else j['subItemType']['vocableValue']
         }
-        
+
         return r
-        
-    
-    
+
     @staticmethod
     def meta(code: str, cache=False):
         '''
         Loads basic metadata of the platform with all sensors and measurement properties.
         '''
         platform = dws.platform(code)
-        
+
         identifier = platform['id']
         filename = str(identifier) + '.json'
-        
+
         # json
         j = None
-        
-        
+
         # check last modified
         lastModified = None
         if cache:
@@ -215,21 +208,20 @@ class dws:
 
         # request metadata
         url = dws.SENSOR_BASE_URL + \
-            '/sensors/item/getDetailedItem/' + str(identifier) + \
-            '?includeChildren=true'
+              '/sensors/item/getDetailedItem/' + str(identifier) + \
+              '?includeChildren=true'
 
         if lastModified:
             url += '&pointInTime=' + lastModified
-        
-        #print('Requesting ' + url)
-    
-        response = requests.get(url, stream = True)
-        
-        
+
+        # print('Requesting ' + url)
+
+        response = requests.get(url, stream=True)
+
         if response.status_code == 200:
             j = json.loads(response.content)
 
-        # cache content
+            # cache content
             if cache:
                 try:
                     with open(filename, 'wb') as f:
@@ -239,11 +231,10 @@ class dws:
 
         elif response.status_code == 204:
             pass
-        
+
         elif response.status_code != 200:
             raise Exception('Error loading detailed platform metadata.')
-        
-        
+
         # parse json
         uuid_map = {}
         dws._map_uuids(j, uuid_map)
@@ -251,66 +242,61 @@ class dws:
         map = dws._parseItems([j], uuid_map)
         platform['children'] = map['items']
         platform['map'] = map['map']
-        
-        return platform
-        
 
-        
+        return platform
+
     @staticmethod
     def meta_json(code: str):
         '''
         Loads full metadata of the platform associated with the given code as JSON.
         '''
         platform = dws.platform(code)
-        
+
         url = dws.SENSOR_BASE_URL + \
-            '/sensors/item/getDetailedItem/' + str(platform['id']) + \
-            '?includeChildren=true'
-        response = requests.get(url, stream = True)
-        
+              '/sensors/item/getDetailedItem/' + str(platform['id']) + \
+              '?includeChildren=true'
+        response = requests.get(url, stream=True)
+
         if response.status_code != 200:
             raise Exception('Error loading detailed platform metadata.')
-        
+
         j = json.loads(response.content)
-        
+
         return j
-    
-    
-    
+
     @staticmethod
     def meta_sensorML(code: str):
         '''
         Loads full metadata of the platform associated with the given code as SensorML.
         '''
         platform = dws.platform(code)
-        
+
         url = dws.SENSOR_BASE_URL + \
-            '/sensors/item/getItemAsSensorML/' + str(platform['id'])
-        response = requests.get(url, stream = True)
-        
+              '/sensors/item/getItemAsSensorML/' + str(platform['id'])
+        response = requests.get(url, stream=True)
+
         if response.status_code != 200:
             raise Exception('Error loading detailed platform metadata.')
-        
+
         return response.content
-    
-    
 
     @staticmethod
     def _map_uuids(obj, map: dict = {}):
         for key in obj:
-            value = obj[key]
-            if isinstance(value, str):
-                if (re.match('^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$', value)):
-                    if key == '@uuid':
-                        map[value] = obj
-            elif isinstance(value, list):
-                for v in value:
-                    dws._map_uuids(v, map)
-            elif isinstance(value, dict):
-                dws._map_uuids(value, map)
+            if isinstance(key, dict):
+                dws._map_uuids(key, map)
+            else:
+                value = obj[key]
+                if isinstance(value, str):
+                    if (re.match('^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$', value)):
+                        if key == '@uuid':
+                            map[value] = obj
+                elif isinstance(value, list):
+                    for v in value:
+                        dws._map_uuids(v, map)
+                elif isinstance(value, dict):
+                    dws._map_uuids(value, map)
 
-
-        
     @staticmethod
     def _parseItems(sensorItems: list, uuid_map: dict = {}):
         '''
@@ -318,7 +304,7 @@ class dws:
         '''
         items = []
         map = {}
-        
+
         for sensorItem in sensorItems:
 
             if isinstance(sensorItem, str):
@@ -359,8 +345,7 @@ class dws:
                         'definition': sensorOutputType['vocableValue'],
                         'unit': unit['code']
                     }
-                    
-                    
+
                     properties = []
                     propertyMap = {}
                     if 'measurementPropertySensorOutputs' in sensorOutput:
@@ -380,34 +365,31 @@ class dws:
                                 'unit': unit['code'],
                                 'type': ptype['generalName']
                             }
-                            
+
                             properties.append(property)
                             propertyMap[property["type"].lower().replace(' ', '_')] = property
-                    
+
                     parameter['properties'] = properties
                     parameters.append(parameter)
-                    
+
                     code = item['code'] + ':' + parameter['code']
                     map[code] = parameter
                     map[code]['properties'] = propertyMap
 
             items.append(item)
-            
 
             if 'childItem' in sensorItem:
                 r = dws._parseItems(sensorItem['childItem'], uuid_map)
                 item['children'] = r['items']
                 map.update(r['map'])
-                
-#            map = {**map, **r['map']}
-        
+
+        #            map = {**map, **r['map']}
+
         r = {
             'items': items,
             'map': map
         }
         return r
-
-
 
     @staticmethod
     def base(code: str):
@@ -440,10 +422,14 @@ class dws:
 
         return r
 
-
-
     @staticmethod
     def get_events(code: str):
+        """
+        request and parse measurement events for the deployed sensor
+
+        :param code: sensor unique resource number (urn)
+        :return: measurement events
+        """
         # platform = dws.platform(code)
         base = dws.base(code)
 
@@ -457,30 +443,49 @@ class dws:
 
         j = json.loads(response.content)
 
-        r = dws._parseEvents(j)
+        uuid_map = {}
+        dws._map_uuids(j, uuid_map)
+
+        r = dws._parseEvents(j, uuid_map)
         base['events'] = r['items']
 
         return base
 
-
-
     @staticmethod
-    def _parseEvents(sensorItems: list):
+    def _parseEvents(eventItems: list, uuid_map: dict = {}):
+        """
+        Similar to _parseItems, but to parse items that contain events and return a simplified item object.
+
+        :param eventItems: a list of items that contain the key 'event'
+        :param uuid_map: a dictionary that maps the uniform unique indices returned from server by dws._map_uuids
+        :return: dictionary of parsed items each corresponding to an event
+        """
         items = []
 
-        sensorItems = [e['event'] for e in sensorItems]
+        eventItems = [e['event'] for e in eventItems]
 
-        for sensorItem in sensorItems:
+        for eventItem in eventItems:
+
+            identifier = eventItem['ID'] if 'ID' in eventItem else eventItem['id']
+
+            event_type = eventItem['eventType']
+            if isinstance(event_type, str):
+                event_type = uuid_map[event_type]
+
+            # possible keys: 'generalName', 'systemName'
+            key = 'generalName'
+            vocable_value = event_type[key] if key in event_type else ''
+
             item = {
-                'id': sensorItem['id'],
-                'startDate': sensorItem['startDate'],
-                'endDate': sensorItem['endDate'],
-                'label': sensorItem['label'],
-                'latitude': sensorItem['latitude'],
-                'longitude': sensorItem['longitude'],
-                'elevation': sensorItem['elevationInMeter'],
-                'vocable': sensorItem['eventType']['vocableValue'],
-                'vocabulary': sensorItem['eventType']['vocabularyID'],
+                'id': identifier,
+                'startDate': eventItem['startDate'],
+                'endDate': eventItem['endDate'],
+                'label': eventItem['label'],
+                'latitude': eventItem['latitude'],
+                'longitude': eventItem['longitude'],
+                'elevation': eventItem['elevationInMeter'],
+                'vocable': vocable_value,
+                'vocabulary': eventItem['vocabularyID'] if 'vocabularyID' in eventItem else ''
             }
 
             items.append(item)
@@ -490,18 +495,22 @@ class dws:
         }
         return r
 
-
-
     @staticmethod
-    def get_geolocation(code: str, vocable_list = None):
-        # code is the sensor name/url
+    def get_geolocation(code: str, vocable_list=None):
+        """
+        Get geolocation (latitude, longitude, and elevation) when the sensor event contains a corresponding vocable
+
+        :param code: sensor unique reference number
+        :param vocable_list: list of events that contain coordinates, e.g. ['Mount', 'Deployment', 'Information']
+        :return: geo-coordinates latitude, longitude, and elevation
+        """
 
         events_list = dws.get_events(code)['events']
 
         # subset by event type / vocable
         if vocable_list is not None:
             j = []
-            for i in range(0,len(events_list)):
+            for i in range(0, len(events_list)):
                 if events_list[i]['vocable'] not in vocable_list:
                     j.append(i)
             for i in sorted(j, reverse=True):
