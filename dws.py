@@ -111,6 +111,12 @@ class dws:
 
     @staticmethod
     def sensor(code: str, sys=None):
+        '''
+        Request and parse sensor properties for a given sensor urn as "code"
+        :param code: sensor unique resource number (urn)
+        :param sys: switch for requesting at an alternative (under development) service
+        :return: dictionary of sensor properties
+        '''
         if sys == 'dev':
             url = dws.SENSOR_DEV_URL + '/sensors/sensorOutputs/getSensorOutputByUrn/' + urllib.parse.quote_plus(code)
         else:
@@ -157,6 +163,12 @@ class dws:
 
     @staticmethod
     def platform(code: str):
+        '''
+        Request and parse attributes at platform level only.
+
+        :param code: sensor unique resource number (urn)
+        :return: dictionary of platform attributes
+        '''
         parts = code.split(':')
 
         if len(parts) < 2:
@@ -186,6 +198,10 @@ class dws:
     def meta(code: str, cache=False):
         '''
         Loads basic metadata of the platform with all sensors and measurement properties.
+
+        :param code: sensor unique resource number (urn)
+        :param cache: for local storage of json file
+        :return:
         '''
         platform = dws.platform(code)
 
@@ -282,6 +298,17 @@ class dws:
 
     @staticmethod
     def _map_uuids(obj, map: dict = {}):
+        '''
+        Parse the uuids for all values and sub items in the obj dictionary that contains uuid.
+
+        "obj" starts with the server response for getDetailedItem and includeChildren=true
+        and _map_uuids is called recursively to map attributes that contain dict or uuid.
+        The "key" variable becomes a dict where events are dict keys of the variable "key"
+
+        :param obj: dictionary of items and sub items, starting with the response for getDetailedItem
+        :param map: the dictionary forwardly referencing the uuids
+        :return: None, but updates argument map
+        '''
         for key in obj:
             if isinstance(key, dict):
                 dws._map_uuids(key, map)
@@ -393,6 +420,9 @@ class dws:
 
     @staticmethod
     def base(code: str):
+        '''
+        Request and parse item of a given sensor urn. Same as platform, but not limited to the second level identifier
+        '''
         parts = code.split(':')
 
         if len(parts) < 2:
@@ -425,7 +455,7 @@ class dws:
     @staticmethod
     def get_events(code: str):
         """
-        request and parse measurement events for the deployed sensor
+        Request and parse measurement events for the deployed sensor
 
         :param code: sensor unique resource number (urn)
         :return: measurement events
@@ -456,7 +486,7 @@ class dws:
         """
         Similar to _parseItems, but to parse items that contain events and return a simplified item object.
 
-        :param eventItems: a list of items that contain the key 'event'
+        :param eventItems: a list of items that should contain the key 'event'
         :param uuid_map: a dictionary that maps the uniform unique indices returned from server by dws._map_uuids
         :return: dictionary of parsed items each corresponding to an event
         """
@@ -498,11 +528,11 @@ class dws:
     @staticmethod
     def get_geolocation(code: str, vocable_list=None):
         """
-        Get geolocation (latitude, longitude, and elevation) when the sensor event contains a corresponding vocable
+        Get geolocation of sensor when the corresponding event contains a corresponding vocable
 
         :param code: sensor unique reference number
         :param vocable_list: list of events that contain coordinates, e.g. ['Mount', 'Deployment', 'Information']
-        :return: geo-coordinates latitude, longitude, and elevation
+        :return: geolocation coordinates latitude, longitude, and elevation
         """
 
         events_list = dws.get_events(code)['events']
