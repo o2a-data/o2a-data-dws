@@ -419,7 +419,7 @@ class dws:
         return r
 
     @staticmethod
-    def base(code: str):
+    def base(code: str, level:int = None):
         '''
         Request and parse item of a given sensor urn. Same as platform, but not limited to the second level identifier
         '''
@@ -428,7 +428,7 @@ class dws:
         if len(parts) < 2:
             raise Exception('Code is to short and cannot be resolved to a platform code.')
 
-        base = ':'.join(parts)
+        base = ':'.join(parts[0:level])
         url = dws.SENSOR_BASE_URL + '/sensors/item/getItemByUrn/' + urllib.parse.quote_plus(base)
         response = requests.get(url, stream=True)
 
@@ -443,6 +443,7 @@ class dws:
             'shortName': j['shortName'],
             'longName': j['longName'],
             'description': j['description']
+            # 'definition': j['rootItemType']['vocableValue'] if 'rootItemType' in j else j['subItemType']['vocableValue']
         }
 
         if len(parts) == 2:
