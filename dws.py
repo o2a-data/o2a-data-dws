@@ -419,7 +419,7 @@ class dws:
         return r
 
     @staticmethod
-    def base(code: str, level:int = None):
+    def base(code: str, level: int = None):
         '''
         Request and parse item of a given sensor urn. Same as platform, but not limited to the second level identifier
         '''
@@ -443,13 +443,8 @@ class dws:
             'shortName': j['shortName'],
             'longName': j['longName'],
             'description': j['description']
-            # 'definition': j['rootItemType']['vocableValue'] if 'rootItemType' in j else j['subItemType']['vocableValue']
+            'definition': j['rootItemType']['vocableValue'] if 'rootItemType' in j else j['subItemType']['vocableValue']
         }
-
-        if len(parts) == 2:
-            r['definition'] = j['rootItemType']['vocableValue']
-        elif len(parts) > 2:
-            r['definition'] = j['subItemType']['vocableValue']
 
         return r
 
