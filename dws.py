@@ -6,7 +6,7 @@ import os.path
 import re
 import requests
 import urllib
-
+import pandas
 
 class dws:
     '''
@@ -104,9 +104,9 @@ class dws:
             raise Exception('Error loading data.'.format(response.reason))
 
         # build the data frame
-        df = pd.read_csv(StringIO(response.text), sep='\t')
-        # df = pd.read_csv(StringIO(response.content), sep = '\t')
-        df['datetime'] = pd.to_datetime(df['datetime'])
+        df = pandas.read_csv(StringIO(response.text), sep='\t')
+        # df = pandas.read_csv(StringIO(response.content), sep = '\t')
+        df['datetime'] = pandas.to_datetime(df['datetime'])
         return df
 
     @staticmethod
