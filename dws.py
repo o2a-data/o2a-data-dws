@@ -442,7 +442,7 @@ class dws:
             'code': j['urn'],
             'shortName': j['shortName'],
             'longName': j['longName'],
-            'description': j['description']
+            'description': j['description'],
             'definition': j['rootItemType']['vocableValue'] if 'rootItemType' in j else j['subItemType']['vocableValue']
         }
 
