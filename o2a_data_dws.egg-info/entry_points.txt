@@ -1,3 +1,0 @@
-[console_scripts]
-o2a_quality = o2a_quality.cli:main
-

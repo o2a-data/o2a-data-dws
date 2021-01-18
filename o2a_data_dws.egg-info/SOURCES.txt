@@ -1,8 +1,0 @@
-README.md
-setup.py
-o2a_data_dws.egg-info/PKG-INFO
-o2a_data_dws.egg-info/SOURCES.txt
-o2a_data_dws.egg-info/dependency_links.txt
-o2a_data_dws.egg-info/entry_points.txt
-o2a_data_dws.egg-info/not-zip-safe
-o2a_data_dws.egg-info/top_level.txt
