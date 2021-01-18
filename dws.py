@@ -150,8 +150,6 @@ class dws:
 
         properties = {}
         for i in j:
-            # name = i['measurementPropertyType']['generalName'].lower().replace(' ', '_')
-
             # get property name
             name = i['measurementPropertyType']
             if isinstance(name, dict):
@@ -168,11 +166,9 @@ class dws:
 
             properties[name] = {
                 'id': i['id'],
-                # 'name': name, #i['measurementName'].lower().replace(' ', '_'),
                 'lower': i['lowerBound'],
                 'upper': i['upperBound'],
-                'unit': unit #i['unitOfMeasurement']['code'],
-                # 'type': i['measurementPropertyType']['generalName']
+                'unit': unit
             }
 
         r['properties'] = properties
