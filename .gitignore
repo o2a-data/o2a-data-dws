@@ -34,3 +34,9 @@ fabric.properties
 *.iml
 modules.xml
 *.ipr
+
+# Distribution / packaging
+*.egg-info/
+
+# IDE settings
+.vscode/

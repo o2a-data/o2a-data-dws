@@ -144,17 +144,31 @@ class dws:
 
         j = json.loads(response.content)
 
+        # parse json
+        uuid_map = {}
+        dws._map_uuids(j, uuid_map)
+
         properties = {}
         for i in j:
-            name = i['measurementPropertyType']['generalName'].lower().replace(' ', '_')
+            # get property name
+            name = i['measurementPropertyType']
+            if isinstance(name, dict):
+                name = name['generalName'].lower().replace(' ', '_')
+            elif name in uuid_map:
+                name = uuid_map[name]['generalName'].lower().replace(' ', '_')
+
+            # get unit
+            unit = i['unitOfMeasurement']
+            if isinstance(unit, dict):
+                unit = unit['code']
+            elif unit in uuid_map:
+                unit = uuid_map[unit]['code']
 
             properties[name] = {
                 'id': i['id'],
-                'name': i['measurementName'].lower().replace(' ', '_'),
                 'lower': i['lowerBound'],
                 'upper': i['upperBound'],
-                'unit': i['unitOfMeasurement']['code'],
-                'type': i['measurementPropertyType']['generalName']
+                'unit': unit
             }
 
         r['properties'] = properties
