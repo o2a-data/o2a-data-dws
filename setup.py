@@ -30,9 +30,7 @@ setup(
     ],
     description="The o2a-data-dws modules supports on the access of O2A data services for the purpose of dowload, analysis and visualization of near real-time data.",
     entry_points={
-        'console_scripts': [
-            'o2a_quality=o2a_quality.cli:main',
-        ],
+        'console_scripts': [ ],
     },
     install_requires=requirements,
     license="Apache-2",
@@ -40,7 +38,7 @@ setup(
     include_package_data=True,
     keywords='dws',
     name='o2a-data-dws',
-    packages=find_packages(include=['dws.py']),
+    packages=find_packages(include=['o2a_data_dws']),
     url='https://github.com/o2a-data/o2a-data-dws.git',
     version='0.1.0',
     zip_safe=False,
