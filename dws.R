@@ -371,15 +371,15 @@ dws.parseItems <- function(sensorItems, uuidMap) {
             property["lower"] = sensorProperty$measurementProperty$lowerBound
             property["upper"] = sensorProperty$measurementProperty$upperBound
             
-            # unit
-            if (is.null(sensorProperty$measurementProperty$unitOfMeasurement)) { ## charcacter -> null
-              sensorProperty$measurementProperty$unitOfMeasurement = uuidMap[[sensorProperty$measurementProperty$unitOfMeasurement]]
-            } else {
-              uuid = sensorProperty$measurementProperty$unitOfMeasurement[["@uuid"]]
-              uuidMap[[uuid]] = sensorProperty$measurementProperty$unitOfMeasurement
-            }
-            property["unit"] = sensorProperty$measurementProperty$unitOfMeasurement$code
-
+            # unit -- temporary down
+            ##if (is.null(sensorProperty$measurementProperty$unitOfMeasurement)) { ## charcacter -> null
+            ##  sensorProperty$measurementProperty$unitOfMeasurement = uuidMap[[sensorProperty$measurementProperty$unitOfMeasurement]]
+            ##} else {
+            ##  uuid = sensorProperty$measurementProperty$unitOfMeasurement[["@uuid"]]
+            ##  uuidMap[[uuid]] = sensorProperty$measurementProperty$unitOfMeasurement
+            ##}
+            ##property["unit"] = sensorProperty$measurementProperty$unitOfMeasurement$code
+            ##
             
             properties[[k]] = property
             
