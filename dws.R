@@ -268,28 +268,27 @@ dws.platform <- function(code) {
 #' Loads basic metadata of the platform with all sensors and measurement properties.
 #' 
 dws.meta <- function(code) {
-  platform = dws.platform(code)
+  platform <- dws.platform(code)
   
   # get the detailed document
-  query = paste(
+  query <- paste0(
     dws.SENSOR_BASE_URL, "/sensors/item/getDetailedItem/",
     platform$id,
-    "?includeChildren=true",
-    sep = "")
+    "?includeChildren=true")
 
-  ls = readLines(query, warn = FALSE)
-  j = fromJSON(ls)
+  #ls = readLines(query, warn = FALSE)
+  fullJ <- fromJSON(query)
   
   # parse children
-  uuidMap = list()
-  r = dws.parseItems(j$childItem, uuidMap)
-  platform["children"] = list(r$items)
-  platform["items"] = list(r$itemMap)
+  uuidMap <- list()
+  r <- dws.parseItems(fullJ$childItem, uuidMap)
+  platform["children"] <- list(r$items)
+  platform["items"] <- list(r$itemMap)
   
   # simple map for parameters and their properties
-  platform["map"] = list(r$map)
+  platform["map"] <- list(r$map)
 
-  platform  
+  return(platform)
 }
 
 #' Parses the given sensor items and returns a simplified item object.
@@ -300,7 +299,7 @@ dws.parseItems <- function(sensorItems, uuidMap) {
   map = list()
   
   for (i in 1:nrow(sensorItems)) {
-    sensorItem = sensorItems[i,]
+      sensorItem = sensorItems[i,]
     
     if (is.character(sensorItem)) {
       sensorItem = uuidMap[[sensorItem]]
@@ -327,7 +326,7 @@ dws.parseItems <- function(sensorItems, uuidMap) {
     sensorOutputs = sensorItem$sensorOutput_Item[[1]]$sensorOutput
     if (!is.null(sensorOutputs)) {
       for (j in 1:nrow(sensorOutputs)) {
-        sensorOutput = sensorOutputs[j,]
+          sensorOutput = sensorOutputs[j,]
         
         if (is.character(sensorOutput)) {
           sensorOutput = uuidMap[[sensorOutput]]
@@ -341,9 +340,7 @@ dws.parseItems <- function(sensorItems, uuidMap) {
         parameter["uuid"] = sensorOutput[["@uuid"]]
         parameter["name"] = sensorOutput$name
         parameter["code"] = ifelse(sensorOutput$shortname != "", sensorOutput$shortname, sensorOutput$name)
-        
-        
-        # resolve type
+          ## resolve type -----------------------------------
         if (is.character(sensorOutput$sensorOutputType[[1]])) {
           sensorOutput$sensorOutputType = uuidMap[[sensorOutput$sensorOutputType[[1]]]]
         } else {
@@ -353,9 +350,7 @@ dws.parseItems <- function(sensorItems, uuidMap) {
         parameter["type"] = sensorOutput$sensorOutputType$generalName
         parameter["description"] = sensorOutput$sensorOutputType$description
         parameter["definition"] = sensorOutput$sensorOutputType$vocableValue
-        
-        
-        # resolve unit
+        ## resolve unit ------------------------------------
         if (is.character(sensorOutput$unitOfMeasurement[[1]])) {
           sensorOutput$unitOfMeasurement = uuidMap[[sensorOutput$unitOfMeasurement[[1]]]]
         } else {
@@ -363,9 +358,7 @@ dws.parseItems <- function(sensorItems, uuidMap) {
           uuidMap[[uuid]] = sensorOutput$unitOfMeasurement
         }
         parameter["unit"] = sensorOutput$unitOfMeasurement$code
-
-        
-        # properties
+        ## properties ---------------------------------------
         sensorProperties = sensorOutput$measurementPropertySensorOutput
 
         properties = list()
@@ -379,7 +372,7 @@ dws.parseItems <- function(sensorItems, uuidMap) {
             property["upper"] = sensorProperty$measurementProperty$upperBound
             
             # unit
-            if (is.character(sensorProperty$measurementProperty$unitOfMeasurement)) {
+            if (is.null(sensorProperty$measurementProperty$unitOfMeasurement)) { ## charcacter -> null
               sensorProperty$measurementProperty$unitOfMeasurement = uuidMap[[sensorProperty$measurementProperty$unitOfMeasurement]]
             } else {
               uuid = sensorProperty$measurementProperty$unitOfMeasurement[["@uuid"]]
@@ -391,8 +384,8 @@ dws.parseItems <- function(sensorItems, uuidMap) {
             properties[[k]] = property
             
             propertyMap[gsub(" ", "_", tolower(property["name"]))] = list(property)
-          }
-        }
+          } ## k
+        } ## fi
         parameter["properties"] = list(properties)
         
         parameters[[j]] = parameter
@@ -404,8 +397,8 @@ dws.parseItems <- function(sensorItems, uuidMap) {
         map[[code]] = parameter
         map[[code]]["properties"] = list(propertyMap)
         
-      }
-    }
+      } ## j 
+    } ## fi -- !is.null(sensorOutputs)
     item["parameters"] = list(parameters)
     
     # children
@@ -423,7 +416,7 @@ dws.parseItems <- function(sensorItems, uuidMap) {
     
     items[[i]] = item
     itemMap[[item$code]] = item
-  }
+  } ## i
   
   list(
     map = map,
