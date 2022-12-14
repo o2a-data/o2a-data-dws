@@ -323,10 +323,13 @@ class dws:
         :param map: the dictionary forwardly referencing the uuids
         :return: None, but updates argument map
         '''
-        for key in obj:
-            if isinstance(key, dict):
-                dws._map_uuids(key, map)
-            else:
+        if isinstance(obj, list):
+            for listElem in obj:
+                dws._map_uuids(listElem, map)
+
+        elif isinstance(obj, dict):
+
+            for key in obj:
                 value = obj[key]
                 if isinstance(value, str):
                     if (re.match('^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$', value)):
