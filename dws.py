@@ -566,3 +566,30 @@ class dws:
             elevation = events_list[0]['elevation']
 
         return latitude, longitude, elevation
+
+
+
+
+if __name__ == '__main__':
+
+    # Test platform query
+    platform = dws.platform("vessel:polarstern")
+    print(platform)
+
+    print("##################################################################")
+
+    # Test DWS sensor query
+    sensors = dws.sensors()
+    print(sensors)
+
+    print("##################################################################")
+
+    # Test DWS sensor query with wildcard
+    sensors = dws.sensors("vessel:polarstern:losgatos_awi_1303:*")
+    print(sensors)
+
+    print("##################################################################")
+
+    # Test SENSOR meta query
+    meta = dws.meta("vessel:polarstern:losgatos_awi_1303")
+    print(meta)
