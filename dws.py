@@ -28,7 +28,6 @@ def download(url):
         return json.loads(response.content)
 
 
-@staticmethod
 def items(pattern: str = None):
     """
     Loads availble sensors from the data service. The optional
@@ -47,7 +46,6 @@ def items(pattern: str = None):
 # items('vessel:polarstern:pco2_go_ps:pre_xco')
 
 
-@staticmethod
 def get(
     items,
     begin: date,
@@ -122,7 +120,6 @@ def get(
 ## get(items, begin, end, aggregate, aggFun)
 
 
-# @staticmethod
 def item(code: str):  # , sys=None):
     """
     Request and parse item properties for a given item urn as "code"
@@ -147,7 +144,7 @@ def parameters(code: int):
     Request....
     """
     url = REGISTRY + "/items/" + str(code) + "/parameters"
-    j = download(url)
+    j = download(url)["records"]
     return j
 
 
@@ -183,7 +180,7 @@ def events(code: int, geo=False):
     return j
 
 
-def contact(code: int):
+def contacts(code: int):
     """
     :code: registry id of item
     """
@@ -207,7 +204,18 @@ def contact(code: int):
     return j
 
 
-print("")
+def subitems(code: str):
+    """
+    retrieve subitems via base url and "*"
+    :param code: item unique resource number (urn)
+    :return: full json
+    """
+    url = REGISTRY + "/items?where=code=LIKE=" + code + ":*"
+    j = download(url)["records"]
+    return j
+
+
+# a=subitems('vessel:mya_ii')
 
 import sys
 
