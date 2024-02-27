@@ -55,7 +55,6 @@ def items(pattern: str = None):
 
 #items('vessel:polarstern:pco2_go_ps:pre_xco')
 
-
 @staticmethod
 def get(items,
         begin: date,
@@ -111,38 +110,62 @@ def get(items,
 
 ## get(items, begin, end, aggregate, aggFun)
 
-
-
-
-
 #@staticmethod
 def item(code: str): #, sys=None):
     """
-    Request and parse sensor properties for a given sensor urn as "code"
+    Request and parse item properties for a given item urn as "code"
     :param code: item unique resource number (urn)
-    :param sys: switch for requesting at an alternative (under development) service
-    :return: dictionary of sensor properties
+    :param sys: switch for requesting at an alternative (under development) service ## not implemented yet
+    :return: full json
     """
     ##        if sys == "dev": ## later
     url = REGISTRY + "/items?where=code=LIKE=" + code
     j = download(url)['records'][0]
-    #if len(j) != 1:
-    #    raise Exception("suspicious number of items. Expected: 1, observed:" + str(len(j)))
 
+    ## ITEM properties
     url = 'https://registry.o2a-data.de/rest/v2/items/' + str(j['id']) + '/properties'
     k = download(url)['records']
     j['itemProperties'] = k
     
     return(j)
 
+def parameters(code: int):
+    """
+    Request....
+    """
+    url = REGISTRY + "/items/" + str(code) + "/parameters"
+    j = download(url)
+    return(j)
 
 
-#code = 'station:svluwobs:svluw2:sbe38_awi_0657'
-#code = 'buoy:2019v1'
+def events(code: int, geo = False):
+    """
+    Requests all events of an item, returns as dict
+    :code: registry id of item 
+    :geo: true == only with valid coordinates, false == all events
+    """
+    if geo is True:
+        url = REGISTRY + '/items/' + str(code) + '/events?where=latitude>=-90 and latitude<=90 and longitude>=-180 and longitude<=180'
+    else:
+        url = REGISTRY + '/items/' + str(code) + '/events'
+        
+    j = download(url)['records'] 
+
+    ## create lookup table
+    lut = {}
+    for i in j:
+        if isinstance(i['type'], dict):
+            lut[i['type']['@uuid']] = i['type']
+
+    ## enrich even info
+    for i in range(len(j)):
+        if not isinstance(j[i]['type'], dict):
+            j[i]['type'] = lut.get(j[i]['type'])
+
+    return(j)
+    
 
 
-
-print('')
 print('')
 
 import sys
