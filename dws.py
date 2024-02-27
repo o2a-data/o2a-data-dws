@@ -1,12 +1,3 @@
-"""
-import datetime
-import json
-import os.path
-import re
-import requests
-import urllib
-"""
-
 from _io import StringIO
 import requests
 import pandas as pd
@@ -16,10 +7,10 @@ import json
 
 # class dws:
 """
-This script abstracts access to metadata stored in sensor.awi.de and data
-available via the data web service (dws).
-Have a look to the documentation at https://spaces.awi.de/display/DM and
-the API descriptions https://sensor.awi.de/api/ and https://dashboard.awi.de/data-xxl/api/
+This script abstracts access to metadata stored in https://registry.o2a-data.de and data 
+available via the data web service (https://dashboard.awi.de/data/).
+Have a look to the documentation at https://o2a-data.de/documentation and
+the API descriptions https://registry.o2a-data.de/api/ and https://dashboard.awi.de/data/api/.
 """
 
 REGISTRY = "https://registry.o2a-data.de/rest/v2"
@@ -184,13 +175,39 @@ def events(code: int, geo=False):
         if isinstance(i["type"], dict):
             lut[i["type"]["@uuid"]] = i["type"]
 
-    ## enrich even info
+    ## enrich event info
     for i in range(len(j)):
         if not isinstance(j[i]["type"], dict):
             j[i]["type"] = lut.get(j[i]["type"])
 
     return j
 
+
+def contact(code: int):
+    """
+    :code: registry id of item
+    """
+    url = REGISTRY + "/items/" + str(code) + "/contacts"
+
+    j = download(url)["records"]
+
+    contacts, roles = {}, {}
+    for i in j:
+        if isinstance(i["contact"], dict):
+            contacts[i["contact"]["@uuid"]] = i["contact"]
+        if isinstance(i["role"], dict):
+            roles[i["role"]["@uuid"]] = i["role"]
+
+    for i in range(len(j)):
+        if not isinstance(j[i]["contact"], dict):
+            j[i]["contact"] = contacts.get(j[i]["contact"])
+        if not isinstance(j[i]["role"], dict):
+            j[i]["role"] = roles.get(j[i]["role"])
+
+    return j
+
+
+print("")
 
 import sys
 
