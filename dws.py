@@ -22,8 +22,20 @@ Have a look to the documentation at https://spaces.awi.de/display/DM and
 the API descriptions https://sensor.awi.de/api/ and https://dashboard.awi.de/data-xxl/api/
 """
 
-REGISTRY = "https://registry.awi.de/api/" 
+REGISTRY = "https://registry.o2a-data.de/rest/v2"
 DWS = "https://dashboard.awi.de/data/rest"
+
+
+def download(url):
+    """
+    auxiliary function
+    """
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise Exception("Error loading data.".format(response.reason))
+    else:
+        return(json.loads(response.content))
+
 
 
 @staticmethod
@@ -37,19 +49,11 @@ def items(pattern: str = None):
     url = DWS + "/sensors"
     if pattern != None:
         url += "?pattern=" + pattern
-        
-    response = requests.get(url, stream=True)
 
-    if response.status_code != 200:
-        raise Exception("Error loading sensors.".format(response.reason))
-
-    j = json.loads(response.content)
-
+    j = download(url)
     return(j)
 
-## items('vessel:polarstern:pco2_go_ps:pre_xco')
-
-
+#items('vessel:polarstern:pco2_go_ps:pre_xco')
 
 
 @staticmethod
@@ -107,89 +111,43 @@ def get(items,
 
 ## get(items, begin, end, aggregate, aggFun)
 
+
+
+
+
+#@staticmethod
+def item(code: str): #, sys=None):
+    """
+    Request and parse sensor properties for a given sensor urn as "code"
+    :param code: item unique resource number (urn)
+    :param sys: switch for requesting at an alternative (under development) service
+    :return: dictionary of sensor properties
+    """
+    ##        if sys == "dev": ## later
+    url = REGISTRY + "/items?where=code=LIKE=" + code
+    j = download(url)['records'][0]
+    #if len(j) != 1:
+    #    raise Exception("suspicious number of items. Expected: 1, observed:" + str(len(j)))
+
+    url = 'https://registry.o2a-data.de/rest/v2/items/' + str(j['id']) + '/properties'
+    k = download(url)['records']
+    j['itemProperties'] = k
+    
+    return(j)
+
+
+
+#code = 'station:svluwobs:svluw2:sbe38_awi_0657'
+#code = 'buoy:2019v1'
+
+
+
 print('')
 print('')
 
 import sys
 sys.exit()
-
-    @staticmethod
-    def sensor(code: str, sys=None):
-        """
-        Request and parse sensor properties for a given sensor urn as "code"
-        :param code: sensor unique resource number (urn)
-        :param sys: switch for requesting at an alternative (under development) service
-        :return: dictionary of sensor properties
-        """
-        if sys == "dev":
-            url = (
-                dws.SENSOR_DEV_URL
-                + "/sensors/sensorOutputs/getSensorOutputByUrn/"
-                + urllib.parse.quote_plus(code)
-            )
-        else:
-            url = (
-                dws.SENSOR_BASE_URL
-                + "/sensors/sensorOutputs/getSensorOutputByUrn/"
-                + urllib.parse.quote_plus(code)
-            )
-
-        response = requests.get(url)
-
-        if response.status_code != 200:
-            raise Exception("Error loading sensor metadata.")
-
-        j = json.loads(response.content)
-
-        r = {
-            "id": j["id"],
-            "name": j["name"],
-            "type": j["sensorOutputType"]["generalName"],
-            "description": j["sensorOutputType"]["description"],
-            "definition": j["sensorOutputType"]["vocableValue"],
-            "unit": j["unitOfMeasurement"]["code"],
-        }
-
-        url = (
-            dws.SENSOR_BASE_URL
-            + "/sensors/measurementProperties/getSensorOutputMeasurementProperties/"
-            + str(r["id"])
-        )
-        response = requests.get(url)
-
-        j = json.loads(response.content)
-
-        # parse json
-        uuid_map = {}
-        dws._map_uuids(j, uuid_map)
-
-        properties = {}
-        for i in j:
-            # get property name
-            name = i["measurementPropertyType"]
-            if isinstance(name, dict):
-                name = name["generalName"].lower().replace(" ", "_")
-            elif name in uuid_map:
-                name = uuid_map[name]["generalName"].lower().replace(" ", "_")
-
-            # get unit
-            unit = i["unitOfMeasurement"]
-            if isinstance(unit, dict):
-                unit = unit["code"]
-            elif unit in uuid_map:
-                unit = uuid_map[unit]["code"]
-
-            properties[name] = {
-                "id": i["id"],
-                "lower": i["lowerBound"],
-                "upper": i["upperBound"],
-                "unit": unit,
-            }
-
-        r["properties"] = properties
-
-        return r
-
+    
     @staticmethod
     def platform(code: str):
         """
