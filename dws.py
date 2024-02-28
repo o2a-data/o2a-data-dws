@@ -316,6 +316,19 @@ class dws:
 
 
 """
+@software{o2a-data-team_dws.py_2024,
+	title = {dws.py},
+	url = {https://github.com/o2a-data/o2a-data-dws},
+	abstract = {lorem},
+	urldate = {2024-02-28},
+	publisher = {Data Flow Framework from Observations to Archives and Analyses},
+	month = Feb,
+	year = {2024},
+	note = {},
+}
+"""
+
+"""
 a = dws()
 a.help()
 # code = "vessel:polarstern:pco2_go_ps"
