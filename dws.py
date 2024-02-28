@@ -14,127 +14,139 @@ class dws:
     the API descriptions https://registry.o2a-data.de/api/ and https://dashboard.awi.de/data/api/.
     """
 
+    ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
     def __init__(self):
         """
         lorem
         """
         self.REGISTRY = "https://registry.o2a-data.de/rest/v2"
         self.DWS = "https://dashboard.awi.de/data/rest"
+        self.teststring = "https://registry.o2a-data.de/rest/v2/vocables/244"
 
+    ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
+    def _download(self, url):
+        """
+        auxiliary function
+        :url: externally created string to call by this fun
+        """
+        response = requests.get(url)
+        if response.status_code != 200:
+            raise Exception("Error loading data.".format(response.reason))
+        else:
+            return json.loads(response.content)
+
+    ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
     def test(self):
-        print(self.REGISTRY)
-        print(self.DWS)
+        #        print(self.REGISTRY)
+        #        print(self.DWS)
+        print(self.teststring)
+        a = self._download(self.teststring)
+        return a
+
+    ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
+    def items(self, pattern: str = None):
+        """
+        Loads availble sensors from the data service. The optional
+        pattern allows * wildcards and can be used to search for sensors.
+
+        See https://dashboard.awi.de/data-xxl/ for documentation.
+        """
+        url = self.DWS + "/sensors"
+        if pattern != None:
+            url += "?pattern=" + pattern
+
+        j = self._download(url)
+        return j
+
+    ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
+    def get(
+        self,
+        items,
+        begin: date,
+        end: date,
+        aggregate: str = "hour",
+        aggregateFunctions: str = "mean",
+    ):
+        """
+        Loads data from the data service for given sensors
+        in the given time range and selected aggregate.
+        See https://dashboard.awi.de/data/ for documentation.
+        """
+        if items == None or len(items) == 0:
+            raise Exception("Item(s) must be defined.")
+
+        if begin == None:
+            raise Exception("Begin timestamp must be defined.")
+
+        if end == None:
+            raise Exception("End timestamp must be defined.")
+
+        if items.count(",") > 0:
+            items = items.replace(" ", "").replace(",", "&sensors=")
+
+        if aggregate.lower() == "second":
+            response = requests.get(
+                self.DWS
+                + "/data?sensors="
+                + items
+                + "&beginDate="
+                + str(begin)
+                + "&endDate="
+                + str(end)
+                + "&aggregate="
+                + aggregate
+                + "&streamit=true&withQualityFlags=false&withLogicalCode=false"
+            )
+        elif (
+            aggregate.lower() == "minute"
+            or aggregate.lower() == "hour"
+            or aggregate.lower() == "day"
+        ):
+            response = requests.get(
+                self.DWS
+                + "/data?sensors="
+                + items
+                + "&beginDate="
+                + str(begin)
+                + "&endDate="
+                + str(end)
+                + "&aggregate="
+                + aggregate
+                + "&aggregateFunctions="
+                + aggregateFunctions
+                ##+ '&limit=20'
+                + "&streamit=true&withQualityFlags=false&withLogicalCode=false"
+            )
+        else:
+            raise Exception(
+                "No valid aggregate defined, use 'second', 'minute', 'hour', or 'day'."
+            )
+
+        if response.status_code != 200:
+            raise Exception("Error loading data.".format(response.reason))
+
+        # build the data frame
+        df = pd.read_csv(StringIO(response.text), sep="\t")
+        df["datetime"] = pd.to_datetime(df["datetime"])
+        return df
 
 
+"""
+code = "vessel:polarstern:pco2_go_ps:pre_xco"
+s = "2024-02-19T00:00:00"
+e = "2024-02-24T00:00:00"
+agg = "hour"
+
+# _download("https://registry.o2a-data.de/rest/v2/vocables/244")
 a = dws()
 a.test()
+a.items(code)
+a.get(items=code, begin=s, end=e)  # , aggregate = 'hour', aggregateFunctions = 'max')
+"""
 
 import sys
 
 sys.exit()
-
-
-def download(url):
-    """
-    auxiliary function
-    """
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise Exception("Error loading data.".format(response.reason))
-    else:
-        return json.loads(response.content)
-
-
-def items(pattern: str = None):
-    """
-    Loads availble sensors from the data service. The optional
-    pattern allows * wildcards and can be used to search for sensors.
-
-    See https://dashboard.awi.de/data-xxl/ for documentation.
-    """
-    url = DWS + "/sensors"
-    if pattern != None:
-        url += "?pattern=" + pattern
-
-    j = download(url)
-    return j
-
-
-# items('vessel:polarstern:pco2_go_ps:pre_xco')
-
-
-def get(
-    items,
-    begin: date,
-    end: date,
-    aggregate: str = "hour",
-    aggregateFunctions: list = None,
-):
-    """
-    Loads data from the data service for given sensors
-    in the given time range and selected aggregate.
-    See https://dashboard.awi.de/data/ for documentation.
-    """
-    if items == None or len(items) == 0:
-        raise Exception("Item(s) must be defined.")
-
-    if begin == None:
-        raise Exception("Begin timestamp must be defined.")
-
-    if end == None:
-        raise Exception("End timestamp must be defined.")
-
-    if items.count(",") > 0:
-        items = items.replace(" ", "").replace(",", "&sensors=")
-
-    if aggregate.lower() == "second":
-        response = requests.get(
-            DWS
-            + "/data?sensors="
-            + items
-            + "&beginDate="
-            + str(begin)
-            + "&endDate="
-            + str(end)
-            + "&aggregate="
-            + aggregate
-            + "&streamit=true&withQualityFlags=false&withLogicalCode=false"
-        )
-    elif (
-        aggregate.lower() == "minute"
-        or aggregate.lower() == "hour"
-        or aggregate.lower() == "day"
-    ):
-        response = requests.get(
-            DWS
-            + "/data?sensors="
-            + items
-            + "&beginDate="
-            + str(begin)
-            + "&endDate="
-            + str(end)
-            + "&aggregate="
-            + aggregate
-            + "&aggregateFunctions="
-            + aggregateFunctions
-            ##+ '&limit=20'
-            + "&streamit=true&withQualityFlags=false&withLogicalCode=false"
-        )
-    else:
-        raise Exception(
-            "No valid aggregate defined, use 'second', 'minute', 'hour', or 'day'."
-        )
-
-    if response.status_code != 200:
-        raise Exception("Error loading data.".format(response.reason))
-
-    # build the data frame
-    df = pd.read_csv(StringIO(response.text), sep="\t")
-    df["datetime"] = pd.to_datetime(df["datetime"])
-    return df
-
-
-## get(items, begin, end, aggregate, aggFun)
 
 
 def item(code: str):  # , sys=None):
