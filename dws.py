@@ -1,5 +1,6 @@
 from _io import StringIO
 import requests
+import re
 import pandas as pd
 import datetime as dt
 from datetime import date
@@ -36,12 +37,25 @@ class dws:
             return json.loads(response.content)
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
+    def _testAggregate(self, pattern, string):
+        """
+        :pattern: aggretation pattern to check on
+        :string: string to be tested
+        """
+        p = "[" + pattern + "]\\" + "w+"
+        a = re.match(p, string.lower())
+        if a is None:
+            return False
+        else:
+            return True
+
+    ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
     def items(self, pattern: str = None):
         """
         Loads availble sensors from the data service. The optional
         pattern allows * wildcards and can be used to search for sensors.
-
-        See https://dashboard.awi.de/data-xxl/ for documentation.
+        See https://dashboard.awi.de/data/ for documentation.
+        :pattern: is parameter urn(s)
         """
         url = self.DWS + "/sensors"
         if pattern != None:
@@ -63,6 +77,11 @@ class dws:
         Loads data from the data service for given sensors
         in the given time range and selected aggregate.
         See https://dashboard.awi.de/data/ for documentation.
+        :items: parameter urn(s)
+        :begin: YYYY-MM-DDTHH:MM:SS string
+        :end: YYYY-MM-DDTHH:MM:SS string
+        :aggregate: second, minute, hour, day
+        :aggregateFunctions: min, max, mean, median, std, count
         """
         if items == None or len(items) == 0:
             raise Exception("Item(s) must be defined.")
@@ -76,44 +95,53 @@ class dws:
         if items.count(",") > 0:
             items = items.replace(" ", "").replace(",", "&sensors=")
 
-        if aggregate.lower() == "second":
+        secondTest = self._testAggregate("sec", aggregate)
+        minTest = self._testAggregate("min", aggregate)
+        hourTest = self._testAggregate("hour", aggregate)
+        dayTest = self._testAggregate("day", aggregate)
+
+        baseLink = (
+            self.DWS
+            + "/data?sensors="
+            + items
+            + "&beginDate="
+            + str(begin)
+            + "&endDate="
+            + str(end)
+            + "&aggregate="
+        )
+
+        if secondTest is True:
             response = requests.get(
-                self.DWS
-                + "/data?sensors="
-                + items
-                + "&beginDate="
-                + str(begin)
-                + "&endDate="
-                + str(end)
-                + "&aggregate="
-                + aggregate
-                + "&streamit=true&withQualityFlags=false&withLogicalCode=false"
-            )
-        elif (
-            aggregate.lower() == "minute"
-            or aggregate.lower() == "hour"
-            or aggregate.lower() == "day"
-        ):
-            response = requests.get(
-                self.DWS
-                + "/data?sensors="
-                + items
-                + "&beginDate="
-                + str(begin)
-                + "&endDate="
-                + str(end)
-                + "&aggregate="
-                + aggregate
-                + "&aggregateFunctions="
-                + aggregateFunctions
-                ##+ '&limit=20'
-                + "&streamit=true&withQualityFlags=false&withLogicalCode=false"
-            )
-        else:
-            raise Exception(
-                "No valid aggregate defined, use 'second', 'minute', 'hour', or 'day'."
+                baseLink
+                + "second&streamit=true&withQualityFlags=false&withLogicalCode=false"
             )
 
+        if minTest is True:
+            response = requests.get(
+                baseLink
+                + "minute&aggregateFunctions="
+                + aggregateFunctions
+                + "&streamit=true&withQualityFlags=false&withLogicalCode=false"
+            )
+
+        if hourTest is True:
+            response = requests.get(
+                baseLink
+                + "hour&aggregateFunctions="
+                + aggregateFunctions
+                + "&streamit=true&withQualityFlags=false&withLogicalCode=false"
+            )
+
+        if dayTest is True:
+            response = requests.get(
+                baseLink
+                + "day&aggregateFunctions="
+                + aggregateFunctions
+                + "&streamit=true&withQualityFlags=false&withLogicalCode=false"
+            )
+
+        ##+ '&limit=20' # <-------------------------------------------- ??!?
         if response.status_code != 200:
             raise Exception("Error loading data.".format(response.reason))
 
@@ -123,12 +151,10 @@ class dws:
         return df
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-    def item(self, code):  # , sys=None):
+    def item(self, code):
         """
         Request and parse item properties for a given item urn as "code"
         :param code: item unique resource number (urn) or ID
-        :param sys: switch for requesting at an alternative (under development) service ## not implemented yet
-        :return: full json
         """
         ##        if sys == "dev": ## later
 
@@ -152,6 +178,7 @@ class dws:
     def parameters(self, code):
         """
         Request....
+        :code: item ID or urn
         """
         if type(code) == str:
             item = self.item(code)
@@ -242,41 +269,44 @@ class dws:
     def subitems(self, code):
         """
         retrieve subitems via base url and "*"
-        :param code: item unique resource number (urn)
-        :return: full json
+        :code: item unique resource number (urn) or ID
         """
         if type(code) == str:
             code = code
-            print(code)
         elif type(code) == int:
             item = self.item(code)
             code = item["code"]
-            print(code)
         else:
             raise Exception("provide item urn or item ID")
 
         url = self.REGISTRY + "/items?where=code=LIKE=" + str(code) + ":*"
         j = self._download(url)["records"]
+
+        types = {}
+        for i in j:
+            if isinstance(i["type"], dict):
+                types[i["type"]["@uuid"]] = i["type"]
+
+        for i in range(len(j)):
+            if not isinstance(j[i]["type"], dict):
+                j[i]["type"] = types.get(j[i]["type"])
         return j
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
 
 
 """
+# test = "m"
+code = "vessel:polarstern:pco2_go_ps:pre_fco"
 a = dws()
-s = "2024-02-19T00:00:00"
-e = "2024-02-24T00:00:00"
-agg = "hour"
-aggfun = 'min'
-code = "vessel:mya_ii:moses_moblab"
-code = 8767
-a.subitems(code)
-a.item(code)
 a.parameters(code)
-a.contacts(code)
-a.events(code)
-"""
+s = "2024-02-22T00:00:00"
+e = "2024-02-23T02:00:00"
+agg = "hour"
+w = a.subitems(code)
+a.get(code, s, e, aggregate=agg, aggregateFunctions="Mean")
 
+"""
 import sys
 
 sys.exit()
