@@ -22,7 +22,27 @@ class dws:
         """
         self.REGISTRY = "https://registry.o2a-data.de/rest/v2"
         self.DWS = "https://dashboard.awi.de/data/rest"
-        self.teststring = "https://registry.o2a-data.de/rest/v2/vocables/244"
+        ##self.teststring = "https://registry.o2a-data.de/rest/v2/vocables/244"
+
+    ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
+    def help(self):
+        """ """
+        print("")
+        print(
+            "- x.items: retrieves info about a specific item if 'code' (item urn) is submitted otherwise it gives a de facto unmanagable data stream to std out. Info is derived from the data web service."
+        )
+        print(
+            "- x.downloadDataFromDWS: retrieves data from data web service \ninput: i) string of parameter urns, multiple can be combined by comma, ii) beginning date (YYYY-MM-DDTHH:MM:SS), iii) end date (YYYY-MM-DDTHH:MM:SS), iv) aggregate level (second, minute, hour, day), defaults to 'hour', iv) aggregate function (min, max, mean, median, count, std), does not apply for 'seconds', defaults to mean"
+        )
+        print(
+            "- x.item: full json of item (incl. item properties)\ninput: item ID or urn"
+        )
+        print("- x.contacts: full json of item contacts\ninput: item ID or urn")
+        print(
+            "- x.events: full json list of events \ninput: item ID or urn, optional 'geo = True' only events with coordinates are put out"
+        )
+        print("- x.subitems: output of all subitems \ninput: item ID or urn ")
+        print("- x.parameters: gives all parameters per item \ninput: item ID or urn ")
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
     def _download(self, url):
@@ -65,7 +85,7 @@ class dws:
         return j
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-    def get(
+    def downloadDataFromDWS(
         self,
         items,
         begin: date,
@@ -154,7 +174,7 @@ class dws:
     def item(self, code):
         """
         Request and parse item properties for a given item urn as "code"
-        :param code: item unique resource number (urn) or ID
+        :code: item unique resource number (urn) or ID
         """
         ##        if sys == "dev": ## later
 
@@ -296,9 +316,10 @@ class dws:
 
 
 """
-# test = "m"
-code = "vessel:polarstern:pco2_go_ps:pre_fco"
 a = dws()
+a.help()
+# code = "vessel:polarstern:pco2_go_ps"
+# test = "m"
 a.parameters(code)
 s = "2024-02-22T00:00:00"
 e = "2024-02-23T02:00:00"
@@ -310,6 +331,4 @@ a.get(code, s, e, aggregate=agg, aggregateFunctions="Mean")
 import sys
 
 sys.exit()
-
-
-# a=subitems('vessel:mya_ii')
+## eof
