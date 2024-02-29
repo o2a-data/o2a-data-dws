@@ -32,7 +32,7 @@ class dws:
             "- x.items: retrieves info about a specific item if 'code' (item urn) is submitted otherwise it gives a de facto unmanagable data stream to std out. Info is derived from the data web service."
         )
         print(
-            "- x.downloadDataFromDWS: retrieves data from data web service \ninput: i) string of parameter urns, multiple can be combined by comma, ii) beginning date (YYYY-MM-DDTHH:MM:SS), iii) end date (YYYY-MM-DDTHH:MM:SS), iv) aggregate level (second, minute, hour, day), defaults to 'hour', iv) aggregate function (min, max, mean, median, count, std), does not apply for 'seconds', defaults to mean"
+            "- x.downloadDataFromDWS: retrieves data from data web service \ninput: i) string of parameter urns, multiple urns can be combined by comma, ii) beginning date (YYYY-MM-DDTHH:MM:SS), iii) end date (YYYY-MM-DDTHH:MM:SS), iv) aggregate level (second, minute, hour, day), defaults to 'hour', iv) aggregate function (min, max, mean, median, count, std), does not apply for 'seconds', defaults to mean"
         )
         print(
             "- x.item: full json of item (incl. item properties)\ninput: item ID or urn"
@@ -87,7 +87,7 @@ class dws:
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
     def downloadDataFromDWS(
         self,
-        items,
+        itemUrns,
         begin: date,
         end: date,
         aggregate: str = "hour",
@@ -208,9 +208,14 @@ class dws:
         else:
             raise Exception("provide item urn or item ID")
 
+        ## <--- put code + shortname here!!!
         url = self.REGISTRY + "/items/" + str(code) + "/parameters"
-        j = self._download(url)["records"]
-        return j
+        ###j = self._download(url)["records"]
+        k = self._download(url)["records"]
+        for i in range(len(k)):
+            k[i]["urn"] = item["code"] + ":" + k[i]["shortName"]
+        ##
+        return k
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
     def events(self, code, geo=False):
@@ -328,19 +333,6 @@ class dws:
 }
 """
 
-"""
-a = dws()
-a.help()
-# code = "vessel:polarstern:pco2_go_ps"
-# test = "m"
-a.parameters(code)
-s = "2024-02-22T00:00:00"
-e = "2024-02-23T02:00:00"
-agg = "hour"
-w = a.subitems(code)
-a.get(code, s, e, aggregate=agg, aggregateFunctions="Mean")
-
-"""
 import sys
 
 sys.exit()
