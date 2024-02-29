@@ -22,18 +22,19 @@ class dws:
         """
         self.REGISTRY = "https://registry.o2a-data.de/rest/v2"
         self.DWS = "https://dashboard.awi.de/data/rest"
-        ##self.teststring = "https://registry.o2a-data.de/rest/v2/vocables/244"
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
     def help(self):
         """ """
-        print("")
+        print("**DWS**")
         print(
             "- x.items: retrieves info about a specific item if 'code' (item urn) is submitted otherwise it gives a de facto unmanagable data stream to std out. Info is derived from the data web service."
         )
         print(
             "- x.downloadDataFromDWS: retrieves data from data web service \ninput: i) string of parameter urns, multiple urns can be combined by comma, ii) beginning date (YYYY-MM-DDTHH:MM:SS), iii) end date (YYYY-MM-DDTHH:MM:SS), iv) aggregate level (second, minute, hour, day), defaults to 'hour', iv) aggregate function (min, max, mean, median, count, std), does not apply for 'seconds', defaults to mean"
         )
+        print("")
+        print("**REGISTRY**")
         print(
             "- x.item: full json of item (incl. item properties)\ninput: item ID or urn"
         )
@@ -331,9 +332,9 @@ class dws:
 	year = {2024},
 	note = {},
 }
+import sys
+sys.exit()
 """
 
-import sys
 
-sys.exit()
 ## eof
