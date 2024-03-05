@@ -160,9 +160,34 @@ item <- function(code) {
     return(j)
 }
 
+#### ---
 
+parameters <- function(code){
+    ## Request....
+    ## :code: item ID or urn 
+    if (is.character(code)) {
+        item <- item(code)
+        code <- item$id
+    } else if (is.numeric(code)) {
+        code <- code
+    } else {
+        stop("provide item urn or item ID")
+    }
+    ##
+    url <- paste0(dws$REGISTRY, "/items/", code, "/parameters")
+    k <- dws$download(url)$records
+    urn <- NA
+    for (i in 1:nrow(k)) {
+        urn[i] <- paste0(item$code, ":", k$shortName[i])
+    }
+    k <- cbind(k, urn)
+    return(k)
+}
+
+#parameters(4044)
+
+#code <- "vessel:polarstern:pco2_go_ps"
 ##a <- item(code)
-##code <- 5755
 #code <- 'vessel:polarstern:pco2_go_ps'
 #code <- 'vessel:polarstern'
 #code <- 5085
