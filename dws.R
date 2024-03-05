@@ -127,11 +127,45 @@ dws$downloadDataFromDWS <- function(itemUrns,
     return(df)
 }
 
-
 ### ---
+item <- function(code) {
+    ## Request and parse item properties for a given item urn as "code"
+    ## :code: item unique resource number (urn) or ID
+    if (is.character(code)) {
+        url <- paste0(dws$REGISTRY, "/items?where=code=LIKE=", code)
+        j <- dws$download(url)$records
+    } else if (is.numeric(code)) {
+        url <- paste0(dws$REGISTRY, "/items/", code)
+        j <- dws$download(url)
+    } else {
+        stop("provide item urn or item ID")
+  }
+    url <- paste0(dws$REGISTRY, "/items/", j$id, "/properties")
+    k <- dws$download(url)$records
+    if (length(k) == 0) {
+        newk <- NA
+    } else {
+        kk <- split(k,seq(nrow(k)))
+        newk <- list()
+        for (l in 1:length(kk)){
+            e <- list()
+            for (i in 1:ncol(kk[[l]])) {
+                e[[i]] <- kk[[l]][ ,i]
+            }
+            names(e) <- colnames(kk[[l]])
+            newk[[l]] <- e
+        }
+    }
+    j$itemProperties <- newk
+    return(j)
+}
 
 
-
+##a <- item(code)
+##code <- 5755
+#code <- 'vessel:polarstern:pco2_go_ps'
+#code <- 'vessel:polarstern'
+#code <- 5085
 #dws$items(itemUrns)
 #itemUrns <- "vessel:polarstern:pco2_go_ps:pre_fco, vessel:polarstern:pco2_go_ps:pre_xco"
 #begin <- "2024-02-22T00:00:00"
