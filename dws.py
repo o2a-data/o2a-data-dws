@@ -102,7 +102,7 @@ class dws:
         :begin: YYYY-MM-DDTHH:MM:SS string
         :end: YYYY-MM-DDTHH:MM:SS string
         :aggregate: second, minute, hour, day
-        :aggregateFunctions: min, max, mean, median, std, count
+        :aggregateFunctions: min, max, mean, median, std, count, ...
         """
         if items == None or len(items) == 0:
             raise Exception("Item(s) must be defined.")
@@ -135,7 +135,8 @@ class dws:
         if secondTest is True:
             response = requests.get(
                 baseLink
-                + "second&streamit=true&withQualityFlags=false&withLogicalCode=false"
+                + "second&streamit=true&"
+                + "withQualityFlags=false&withLogicalCode=false"
             )
 
         if minTest is True:
@@ -238,7 +239,9 @@ class dws:
                 self.REGISTRY
                 + "/items/"
                 + str(code)
-                + "/events?where=latitude>=-90 and latitude<=90 and longitude>=-180 and longitude<=180"
+                + "/events?where="
+                + "latitude>=-90 and latitude<=90 and"
+                + "longitude>=-180 and longitude<=180"
             )
         else:
             url = self.REGISTRY + "/items/" + str(code) + "/events"
