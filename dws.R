@@ -190,7 +190,7 @@ parameters <- function(code){
 events <- function(code, geo = FALSE) {
     ## Requests all events of an item, returns as dict
     ## :code: registry id of item
-    ## :geo: true == only with valid coordinates, false == all events
+    ## :geo: TRUE == only with valid coordinates, FALSE == all events
     if (is.character(code)) {
         item <- item(code)
         code <- item$id
@@ -228,13 +228,60 @@ events <- function(code, geo = FALSE) {
     return(j)
 }
 
+#### ---------
+
+contacts <- function(code) {
+    ## requests contacts per item
+    ## :code: registry id or urn of item
+    if (is.character(code)) {
+        item <- item(code)
+        code <- item$id
+    } else if (is.numeric(code)) {
+        code <- code
+    } else {
+        stop("provide item urn or item ID")
+    }
+    ##
+    url <- paste0(dws$REGISTRY, "/items/", as.character(code), "/contacts")
+    ##
+    j <- dws$download(url)$records
+    j <- split(j, seq(nrow(j)))
+    ##    
+    contacts <- list()
+    roles <- list()
+    for (i in j){
+        if ( length(i$contact[[1]]) > 1){
+            contacts[[i$contact[[1]]$`@uuid`]] <- i$contact[[1]]
+        }
+        ##
+        if ( length(i$role[[1]]) > 1){
+            roles[[i$role[[1]]$`@uuid`]] <- i$role[[1]]
+        }
+    }
+    ##
+    for (i in 1:length(j)){
+        if ( length(j[[i]]$contact[[1]]) == 1){
+            j[[i]]$contact[[1]] <- contacts[[j[[i]]$contact[[1]]]]
+        }
+        if ( length(j[[i]]$role[[1]]) == 1){
+            j[[i]]$role[[1]] <- roles[[j[[i]]$role[[1]]]]
+        }
+    }
+    return(j)
+}
+
+
+
+
+##code <- 456
+##a <- contacts(code)
+
 #a <- events(456)
 #b <- events(456, geo = TRUE)
 #print(paste(length(b), "/", length(a)))
 
         
 #parameters(4044)
-#code <- 4044
 #code <- "vessel:polarstern:pco2_go_ps"
 ##a <- item(code)
 #code <- 'vessel:polarstern:pco2_go_ps'
