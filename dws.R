@@ -184,8 +184,57 @@ parameters <- function(code){
     return(k)
 }
 
-#parameters(4044)
 
+#### ---------
+
+events <- function(code, geo = FALSE) {
+    ## Requests all events of an item, returns as dict
+    ## :code: registry id of item
+    ## :geo: true == only with valid coordinates, false == all events
+    if (is.character(code)) {
+        item <- item(code)
+        code <- item$id
+    } else if (is.numeric(code)) {
+        code <- code
+    } else {
+        stop("provide item urn or item ID")
+    }
+    ##
+    if ( geo == TRUE ) {
+        url <- paste0(dws$REGISTRY, "/items/",
+                      as.character(code),
+                      "/events?where=",
+                      "latitude%3E%3D-90%20and%20latitude%3C%3D90%20",
+                      "and%20longitude%3E%3D-180%20and%20longitude%3C%3D180"
+                      )
+    } else {
+        url <- paste0(dws$REGISTRY, "/items/", as.character(code), "/events")
+    }
+    j <- dws$download(url)$records
+    j <- split(j, seq(nrow(j)))
+    ## create lookup table
+    lut <- list()
+    for (i in j){
+        if ( length(i$type[[1]]) > 1){
+            lut[[i$type[[1]]$`@uuid`]] <- i$type
+        } 
+    }
+    ## enrich event info
+    for (i in 1:length(j)){
+        if ( length(j[[i]]$type[[1]]) == 1){
+            j[[i]]$type[[1]] <- lut[[j[[i]]$type[[1]]]]
+        }
+    }
+    return(j)
+}
+
+#a <- events(456)
+#b <- events(456, geo = TRUE)
+#print(paste(length(b), "/", length(a)))
+
+        
+#parameters(4044)
+#code <- 4044
 #code <- "vessel:polarstern:pco2_go_ps"
 ##a <- item(code)
 #code <- 'vessel:polarstern:pco2_go_ps'
