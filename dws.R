@@ -162,10 +162,10 @@ item <- function(code) {
 
 #### ---
 
-parameters <- function(code){
+parameters <- function(code) {
     ## Request....
-    ## :code: item ID or urn 
-    if (is.character(code)) {
+    ## :code: item ID or urn
+    if ( is.character(code) ) {
         item <- item(code)
         code <- item$id
     } else if (is.numeric(code)) {
@@ -270,32 +270,38 @@ contacts <- function(code) {
     return(j)
 }
 
+### -----------------
+subitems <- function(code){
+    ## retrieve subitems via code/urn by parent ID
+    ## :code: item unique resource number (urn) or ID
+    if (is.character(code)) {
+        item <- item(code)
+        code <- item$id
+    } else if (is.numeric(code)) {
+        code <- code
+    } else {
+        stop("provide item urn or item ID")
+    }
+    ##
+    url <- paste0(dws$REGISTRY, "/items?where=parent.id==", as.character(code))
+    ##
+    j <- dws$download(url)$records
+    j <- split(j, seq(nrow(j)))
 
-
-
-##code <- 456
-##a <- contacts(code)
-
-#a <- events(456)
-#b <- events(456, geo = TRUE)
-#print(paste(length(b), "/", length(a)))
-
-        
-#parameters(4044)
-#code <- "vessel:polarstern:pco2_go_ps"
-##a <- item(code)
-#code <- 'vessel:polarstern:pco2_go_ps'
-#code <- 'vessel:polarstern'
-#code <- 5085
-#dws$items(itemUrns)
-#itemUrns <- "vessel:polarstern:pco2_go_ps:pre_fco, vessel:polarstern:pco2_go_ps:pre_xco"
-#begin <- "2024-02-22T00:00:00"
-#end <- "2024-02-25T00:00:00"
-#agg <- "day"
-#aggfun <- "q75"
-
-#a <- dws$downloadDataFromDWS(itemUrns, begin = begin, end = end, aggregate = agg, aggregateFunctions = aggfun)
-
+    types <- list()
+    for (i in j){
+        if ( length(i$type[[1]]) > 1){
+            types[[i$type[[1]]$`@uuid`]] <- i$type[[1]]
+        }
+    }
+    ##
+    for (i in 1:length(j)){
+        if ( length(j[[i]]$type[[1]]) == 1){
+            j[[i]]$type[[1]] <- types[[j[[i]]$type[[1]]]]
+        }
+    }
+    return(j)
+}
 
 
 ## eof
