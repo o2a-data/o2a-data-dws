@@ -8,7 +8,7 @@ dws <- list()
 dws$REGISTRY <- "https://registry.o2a-data.de/rest/v2"
 dws$DWS <- "https://dashboard.awi.de/data/rest"
 
-
+## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
 dws$download <- function(url) {
     ## auxiliary function
     ## :url: externally created string to call by this fun
@@ -20,6 +20,7 @@ dws$download <- function(url) {
     }
 }
 
+## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
 dws$testAggregate <- function(pattern, string) {
     ## :pattern: aggretation pattern to check on
     ## :string: string to be tested
@@ -28,6 +29,7 @@ dws$testAggregate <- function(pattern, string) {
     return(a)
 }
 
+## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
 dws$items <- function(pattern = NULL) {
     ## Loads availble sensors from the data service. The optional
     ## pattern allows * wildcards and can be used to search for sensors.
@@ -41,6 +43,7 @@ dws$items <- function(pattern = NULL) {
     return(as.list(j))
 }
 
+## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
 dws$downloadDataFromDWS <- function(itemUrns,
                                     begin,
                                     end,
@@ -85,7 +88,8 @@ dws$downloadDataFromDWS <- function(itemUrns,
         response <- GET(
             paste0(
                 baseLink,
-                "second&streamit=true&withQualityFlags=false&withLogicalCode=false"
+                "second&streamit=true&withQualityFlags=false",
+                "&withLogicalCode=false"
             )
         )
     }
@@ -95,7 +99,8 @@ dws$downloadDataFromDWS <- function(itemUrns,
                 baseLink,
                 "minute&aggregateFunctions=",
                 aggregateFunctions,
-                "&streamit=true&withQualityFlags=false&withLogicalCode=false"
+                "&streamit=true&withQualityFlags=false",
+                "&withLogicalCode=false"
             )
         )
     }
@@ -105,7 +110,8 @@ dws$downloadDataFromDWS <- function(itemUrns,
                 baseLink,
                 "hour&aggregateFunctions=",
                 aggregateFunctions,
-                "&streamit=true&withQualityFlags=false&withLogicalCode=false"
+                "&streamit=true&withQualityFlags=false",
+                "&withLogicalCode=false"
             )
         )
     }
@@ -127,8 +133,8 @@ dws$downloadDataFromDWS <- function(itemUrns,
     return(df)
 }
 
-### ---
-item <- function(code) {
+## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
+dws$item <- function(code) {
     ## Request and parse item properties for a given item urn as "code"
     ## :code: item unique resource number (urn) or ID
     if (is.character(code)) {
@@ -160,9 +166,8 @@ item <- function(code) {
     return(j)
 }
 
-#### ---
-
-parameters <- function(code) {
+## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
+dws$parameters <- function(code) {
     ## Request....
     ## :code: item ID or urn
     if ( is.character(code) ) {
@@ -184,10 +189,8 @@ parameters <- function(code) {
     return(k)
 }
 
-
-#### ---------
-
-events <- function(code, geo = FALSE) {
+## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
+dws$events <- function(code, geo = FALSE) {
     ## Requests all events of an item, returns as dict
     ## :code: registry id of item
     ## :geo: TRUE == only with valid coordinates, FALSE == all events
@@ -228,9 +231,8 @@ events <- function(code, geo = FALSE) {
     return(j)
 }
 
-#### ---------
-
-contacts <- function(code) {
+## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
+dws$contacts <- function(code) {
     ## requests contacts per item
     ## :code: registry id or urn of item
     if (is.character(code)) {
@@ -270,7 +272,7 @@ contacts <- function(code) {
     return(j)
 }
 
-### -----------------
+## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
 subitems <- function(code){
     ## retrieve subitems via code/urn by parent ID
     ## :code: item unique resource number (urn) or ID
@@ -283,7 +285,9 @@ subitems <- function(code){
         stop("provide item urn or item ID")
     }
     ##
-    url <- paste0(dws$REGISTRY, "/items?where=parent.id==", as.character(code))
+    url <- paste0(dws$REGISTRY,
+                  "/items?where=parent.id==",
+                  as.character(code))
     ##
     j <- dws$download(url)$records
     j <- split(j, seq(nrow(j)))
@@ -302,6 +306,5 @@ subitems <- function(code){
     }
     return(j)
 }
-
 
 ## eof
