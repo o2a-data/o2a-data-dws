@@ -2,17 +2,19 @@ from _io import StringIO
 import requests
 import re
 import pandas as pd
-import datetime as dt
 from datetime import date
 import json
+
+##import datetime as dt
 
 
 class dws:
     """
-    This script abstracts access to metadata stored in https://registry.o2a-data.de and data
-    available via the data web service (https://dashboard.awi.de/data/).
-    Have a look to the documentation at https://o2a-data.de/documentation and
-    the API descriptions https://registry.o2a-data.de/api/ and https://dashboard.awi.de/data/api/.
+    This script abstracts access to metadata stored in
+    https://registry.o2a-data.de and data available via the data web service
+    (https://dashboard.awi.de/data/). Have a look to the documentation at
+    https://o2a-data.de/documentation and the API descriptions
+    https://registry.o2a-data.de/api/ and https://dashboard.awi.de/data/api/.
     """
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
@@ -28,7 +30,7 @@ class dws:
         """ """
         print("**DWS**")
         print(
-            "- x.items: retrieves info about a specific item if 'code' (item urn) is submitted otherwise it gives a de facto unmanagable data stream to std out. Info is derived from the data web service."
+            "- x.items: retrieves info about a specific item if 'code'\n (item urn) is submitted otherwise it gives a de facto unmanagable\n data stream to std out. Info is derived from the data web service."
         )
         print(
             "- x.downloadDataFromDWS: retrieves data from data web service \ninput: i) string of parameter urns, multiple urns can be combined by comma, ii) beginning date (YYYY-MM-DDTHH:MM:SS), iii) end date (YYYY-MM-DDTHH:MM:SS), iv) aggregate level (second, minute, hour, day), defaults to 'hour', iv) aggregate function (min, max, mean, median, count, std), does not apply for 'seconds', defaults to mean"
@@ -324,6 +326,7 @@ class dws:
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
 
 
+a = dws()
 """
 @software{o2a-data-team_dws.py_2024,
 	title = {dws.py},
