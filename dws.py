@@ -301,14 +301,14 @@ class dws:
         :code: item unique resource number (urn) or ID
         """
         if type(code) == str:
-            code = code
-        elif type(code) == int:
             item = self.item(code)
-            code = item["code"]
+            code = item["id"]
+        elif type(code) == int:
+            code = code
         else:
             raise Exception("provide item urn or item ID")
 
-        url = self.REGISTRY + "/items?where=code=LIKE=" + str(code) + ":*"
+        url = self.REGISTRY + "/items?where=parent.id==" + str(code)
         j = self._download(url)["records"]
 
         types = {}
