@@ -5,11 +5,11 @@ library('readr')
 
 dws <- list()
 
-dws$REGISTRY <- "https://registry.o2a-data.de/rest/v2"
-dws$DWS <- "https://dashboard.awi.de/data/rest"
+REGISTRY <- "https://registry.o2a-data.de/rest/v2"
+DWS <- "https://dashboard.awi.de/data/rest"
 
 ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-dws$download <- function(url) {
+download <- function(url) {
     ## auxiliary function
     ## :url: externally created string to call by this fun
     response <- httr::GET(url)
@@ -21,7 +21,7 @@ dws$download <- function(url) {
 }
 
 ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-dws$testAggregate <- function(pattern, string) {
+testAggregate <- function(pattern, string) {
     ## :pattern: aggretation pattern to check on
     ## :string: string to be tested
     p <- paste0("[", pattern, "]\\w+")
@@ -30,21 +30,21 @@ dws$testAggregate <- function(pattern, string) {
 }
 
 ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-dws$items <- function(pattern = NULL) {
+items <- function(pattern = NULL) {
     ## Loads availble sensors from the data service. The optional
     ## pattern allows * wildcards and can be used to search for sensors.
     ## See https://dashboard.awi.de/data/ for documentation.
     ## :pattern: is parameter urn(s)
-    url <- paste0(dws$DWS, "/sensors")
+    url <- paste0(DWS, "/sensors")
     if (!is.null(pattern)) {
         url <- paste0(url, "?pattern=", pattern)
     }
-    j <- dws$download(url)
+    j <- download(url)
     return(as.list(j))
 }
 
 ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-dws$downloadDataFromDWS <- function(itemUrns,
+downloadDataFromDWS <- function(itemUrns,
                                     begin,
                                     end,
                                     aggregate,
@@ -70,12 +70,12 @@ dws$downloadDataFromDWS <- function(itemUrns,
         itemUrns <- gsub(" ", "", itemUrns)
         itemUrns <- gsub(",", "&sensors=", itemUrns)
     }
-    secondTest <- dws$testAggregate("sec", aggregate)
-    minTest <- dws$testAggregate("min", aggregate)
-    hourTest <- dws$testAggregate("hour", aggregate)
-    dayTest <- dws$testAggregate("day", aggregate)
+    secondTest <- testAggregate("sec", aggregate)
+    minTest <- testAggregate("min", aggregate)
+    hourTest <- testAggregate("hour", aggregate)
+    dayTest <- testAggregate("day", aggregate)
     baseLink <- paste0(
-        dws$DWS,
+        DWS,
         "/data?sensors=",
         itemUrns,
         "&beginDate=",
@@ -134,20 +134,20 @@ dws$downloadDataFromDWS <- function(itemUrns,
 }
 
 ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-dws$item <- function(code) {
+item <- function(code) {
     ## Request and parse item properties for a given item urn as "code"
     ## :code: item unique resource number (urn) or ID
     if (is.character(code)) {
-        url <- paste0(dws$REGISTRY, "/items?where=code=LIKE=", code)
-        j <- dws$download(url)$records
+        url <- paste0(REGISTRY, "/items?where=code=LIKE=", code)
+        j <- download(url)$records
     } else if (is.numeric(code)) {
-        url <- paste0(dws$REGISTRY, "/items/", code)
-        j <- dws$download(url)
+        url <- paste0(REGISTRY, "/items/", code)
+        j <- download(url)
     } else {
         stop("provide item urn or item ID")
   }
-    url <- paste0(dws$REGISTRY, "/items/", j$id, "/properties")
-    k <- dws$download(url)$records
+    url <- paste0(REGISTRY, "/items/", j$id, "/properties")
+    k <- download(url)$records
     if (length(k) == 0) {
         newk <- NA
     } else {
@@ -167,7 +167,7 @@ dws$item <- function(code) {
 }
 
 ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-dws$parameters <- function(code) {
+parameters <- function(code) {
     ## Request....
     ## :code: item ID or urn
     if ( is.character(code) ) {
@@ -179,8 +179,8 @@ dws$parameters <- function(code) {
         stop("provide item urn or item ID")
     }
     ##
-    url <- paste0(dws$REGISTRY, "/items/", code, "/parameters")
-    k <- dws$download(url)$records
+    url <- paste0(REGISTRY, "/items/", code, "/parameters")
+    k <- download(url)$records
     urn <- NA
     for (i in 1:nrow(k)) {
         urn[i] <- paste0(item$code, ":", k$shortName[i])
@@ -190,7 +190,7 @@ dws$parameters <- function(code) {
 }
 
 ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-dws$events <- function(code, geo = FALSE) {
+events <- function(code, geo = FALSE) {
     ## Requests all events of an item, returns as dict
     ## :code: registry id of item
     ## :geo: TRUE == only with valid coordinates, FALSE == all events
@@ -204,16 +204,16 @@ dws$events <- function(code, geo = FALSE) {
     }
     ##
     if ( geo == TRUE ) {
-        url <- paste0(dws$REGISTRY, "/items/",
+        url <- paste0(REGISTRY, "/items/",
                       as.character(code),
                       "/events?where=",
                       "latitude%3E%3D-90%20and%20latitude%3C%3D90%20",
                       "and%20longitude%3E%3D-180%20and%20longitude%3C%3D180"
                       )
     } else {
-        url <- paste0(dws$REGISTRY, "/items/", as.character(code), "/events")
+        url <- paste0(REGISTRY, "/items/", as.character(code), "/events")
     }
-    j <- dws$download(url)$records
+    j <- download(url)$records
     j <- split(j, seq(nrow(j)))
     ## create lookup table
     lut <- list()
@@ -232,7 +232,7 @@ dws$events <- function(code, geo = FALSE) {
 }
 
 ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-dws$contacts <- function(code) {
+contacts <- function(code) {
     ## requests contacts per item
     ## :code: registry id or urn of item
     if (is.character(code)) {
@@ -244,9 +244,9 @@ dws$contacts <- function(code) {
         stop("provide item urn or item ID")
     }
     ##
-    url <- paste0(dws$REGISTRY, "/items/", as.character(code), "/contacts")
+    url <- paste0(REGISTRY, "/items/", as.character(code), "/contacts")
     ##
-    j <- dws$download(url)$records
+    j <- download(url)$records
     j <- split(j, seq(nrow(j)))
     ##    
     contacts <- list()
@@ -285,11 +285,11 @@ subitems <- function(code){
         stop("provide item urn or item ID")
     }
     ##
-    url <- paste0(dws$REGISTRY,
+    url <- paste0(REGISTRY,
                   "/items?where=parent.id==",
                   as.character(code))
     ##
-    j <- dws$download(url)$records
+    j <- download(url)$records
     j <- split(j, seq(nrow(j)))
 
     types <- list()
@@ -306,5 +306,6 @@ subitems <- function(code){
     }
     return(j)
 }
+
 
 ## eof
