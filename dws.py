@@ -204,17 +204,15 @@ class dws:
         Request....
         :code: item ID or urn
         """
+        item = self.item(code)
         if type(code) == str:
-            item = self.item(code)
             code = item["id"]
         elif type(code) == int:
             code = code
         else:
             raise Exception("provide item urn or item ID")
 
-        ## <--- put code + shortname here!!!
         url = self.REGISTRY + "/items/" + str(code) + "/parameters"
-        ###j = self._download(url)["records"]
         k = self._download(url)["records"]
         for i in range(len(k)):
             k[i]["urn"] = item["code"] + ":" + k[i]["shortName"]
@@ -326,7 +324,6 @@ class dws:
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
 
 
-a = dws()
 """
 @software{o2a-data-team_dws.py_2024,
 	title = {dws.py},
