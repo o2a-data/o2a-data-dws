@@ -1,37 +1,29 @@
 
 
-<!--
-[![DOI:10013/epic.4c938286-8716-4ea2-b341-81ecbe7cfa3a](https://zenodo.org/badge/DOI/10013/epic.4c938286-8716-4ea2-b341-81ecbe7cfa3a.svg)](http://hdl.handle.net/10013/epic.4c938286-8716-4ea2-b341-81ecbe7cfa3a)
--->
+# o2a-data
 
-# o2a-data-dws
-
-[O2A](https://www.awi.de/data-flow) consists of a comprehensive set of solutions designed to support users in their scientific workflows.  
-<!--Among other tasks, we are dedicated to publish examples of analysis tools for supporting direct access to various backends (flat files, relational databases, hadoop, etc).-->
-
-This repository specifically provides examples in [R](https://www.r-project.org/) and [python](https://www.python.org/) 
-on how to access services from the O2A universe 
-for the purpose of download, blend, and analyze near real-time data in a [FAIR](https://doi.org/10.1038/sdata.2016.18) and 
-[reproducible](https://doi.org/10.1038/sdata.2016.18) manner.
-Items generating data are described in detail under [registry](https://registry.o2a-data.de/).
-Measurement data originates from the O2A near real-time database [dashboard](https://dashboard.o2a-data.de). 
+[O2A](https://o2a-data.de/) consists of a comprehensive set of solutions designed to support users in their scientific workflows. 
 
 
-# Examples 
+This repository specifically provides examples and code snippets in [R](https://www.r-project.org/) and [python](https://www.python.org/) 
+on how to access certain services from the O2A universe, in order to conduct [FAIR](https://doi.org/10.1038/sdata.2016.18) 
+and reproducible state of the art data driven research. 
 
-<!-- In this section we list all examples which have been developed so far. The list will be growing as an increasing number of use cases for O2A are being tested.-->
+These services are: 
+
+- [REGISTRY](https://registry.o2a-data.de/) -- an authoritative repository for managing platform, device and sensor-related information, and 
+- the [Data Web Service](https://dashboard.awi.de/data/) -- a near real-time database and aggregation service.
 
 
-| Example                             | Description                                                                                               |
-|-------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| [dws.R](dws.R)                      | Set of basic functions to access and analyze some of the O2A services in R.                               |
-| [dws.py](dws.py)                    | Set of basic functions to access and analyze some of the O2A services in Python.                          |
-<!--| [Example in PY](dws-py-intro.ipynb) | Analytics and visualization of NRT temperature data from various sensors extracted from Svalbard Station. |-->
-<!-- | [Example in R](dws-r-intro.ipynb)   | Analytics and visualization of NRT temperature data from various sensors extracted from Svalbard Station. |-->
+| Example                  | Description                                                                                                 |
+|--------------------------|-------------------------------------------------------------------------------------------------------------|
+| [o2a.R](o2a.R)           | Set of basic functions to access and analyze some of the O2A services in [R](https://www.r-project.org/).   |
+| [o2a.py](o2a.py)         | Set of basic functions to access and analyze some of the O2A services in [python](https://www.python.org/). |
+| [o2a-py-summary.ipynb]() | Short summary and showcase of `o2a.py` as jupyter-notebook.                                                 |
+
 
 
 <p align="right"><a href="#top">&#x25B2; back to top</a></p>
-
 
 # Training
 
@@ -44,15 +36,17 @@ Additionally the various workshops offered by [the carpentries](https://carpentr
 
 # Support
 
-The O2A software group is engaged in providing support and implementing additional contributions.  Emails on these issues should be sent to o2a-support(at)awi.de
-
+The O2A software group is engaged in providing support and implementing additional contributions. To get in touch on these issues please contact
+[o2a-support@awi.de](mailto:o2a-support@awi.de?subject=mail%20from%20github%20README).
 
 <p align="right"><a href="#top">&#x25B2; back to top</a></p>
-
 
 # License
 
+[BSD-3-clause](https://opensource.org/license/bsd-3-clause)
+
+<!-- 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 <p align="right"><a href="#top">&#x25B2; back to top</a></p>
-
+-->
 
