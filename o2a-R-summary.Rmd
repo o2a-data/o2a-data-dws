@@ -1,0 +1,169 @@
+---
+title: "O2A R-script examples and summary"
+author: "Noemi Ruegg"
+date: "2024-04-03"
+output: github_document
+---
+
+# Packages
+This example code utilizes the following libraries. Make sure these packages are installed e.g. with the `install.packages()` function.
+
+```{r packages}
+source('o2a.R')
+```
+
+Note that `httr2` json outputs are in the form of lists. This may be important for when you further work with the requested data. Using the `str()` function for the outputs makes them more readable in the output terminal.
+
+# 1. Search for specific sensors
+Loads availble sensors from the data service. Can take an optional `pattern`, which allows * wildcards and can be used to search for sensors.
+See https://dashboard.awi.de/data/ for documentation.
+
+`pattern` is the parameter urn(s)
+
+***
+Using the air temperature sensor of the research vessel Heincke as an example:
+```{r items run}
+urns <- "vessel:heincke:dwd:air_temperature"
+str(items(urns))
+```
+
+# 2. Download data from DWS
+Downloads data of chosen sensor (`itemUrns`) from DWS. It takes time frame specifications, as well as aggregation arguments.
+
+- `itemUrns` is the parameter urn from DWS  
+- `begin` "YYYY-MM-DDTHH:MM:SS" is the desired start point  
+- `end` "YYYY-MM-DDTHH:MM:SS" is the desired end point  
+- `aggregate` is the aggregation interval and can be `"second"`, `"minute"`, `"hour"`, or `"day"`  
+- `aggregateFunctions` is the aggregation function and can be `"min"`, `"max"`, `"mean"`, `"median"`, `"std"`, or `"count"`
+
+***
+Here we use salinity sensor on Heincke as an example. The data is aggregated by day and uses `mean`as a function. It returns a dataframe.
+
+
+```{r downloadDWS run}
+itemUrns <- "vessel:heincke:tsg:salinity"
+begin <- "2024-02-01T00:00:00"
+end <- "2024-03-08T23:59:59"
+aggregate <- "day"
+aggregateFunctions <- "mean"
+
+downloadDataFromDWS(itemUrns, begin, end, aggregate, aggregateFunctions)
+```
+
+# 3. Item metadata
+This function downloads the metadata of a specified item as displayed in https://registry.o2a-data.de/. It also adds the items `properties` to the list, if applicable. For further explanation of the O2A service Registry please see the documentation at https://o2a-data.de/documentation.
+
+`code` item `urn` or `ID` number from Registry.
+
+***
+Here we use the item 7464 as an example.
+
+```{r item run}
+code <- 7464
+
+str(item(code))
+```
+You could also pass the `urn` to the function and get the same result.
+```{r item run alt, results = "hide"}
+code <- "vessel:mya_ii:ufz_baro_106884"
+
+str(item(code))
+```
+
+# 4. Parameters of an item
+This function downloads the parameters of a specified item as displayed in https://registry.o2a-data.de/. For further explanation of the O2A service Registry please see the documentation at https://o2a-data.de/documentation.
+
+`code` is the item `urn` or `ID` number from Registry.
+
+***
+Here we use the item 7464 as an example.
+
+```{r parameters run}
+code <- 7464
+
+str(parameters(code))
+```
+
+You could also pass the `urn` to the function and get the same result.
+
+```{r parameters run alt, results = "hide"}
+code <- "vessel:mya_ii:ufz_baro_106884"
+
+str(parameters(code))
+```
+
+# 5. Events of an item
+This function downloads the events of a specified item as displayed in https://registry.o2a-data.de/. For further explanation of the O2A service Registry please see the documentation at https://o2a-data.de/documentation. Additionally, you can filter for events that have coordinates attached to them.
+
+- `code` is the item `urn` or `ID` number from Registry
+- `geo` default = FALSE; filter for events with valid coordinates
+
+***
+Here we use a sound velocity probe from Heincke as an example.
+
+```{r events run}
+code <- 8566
+
+str(events(code))
+```
+
+You could also pass the `urn` to the function and get the same result.
+```{r events run alt, results = "hide"}
+code <- "vessel:heincke:midas_svp_31665"
+
+str(events(code))
+```
+
+Here is an example with `geo = TRUE` using the vessel Mya II. The `length()` function is utilized to show the difference in the resulting list.
+
+```{r events geo run}
+code <- 456
+
+# List length without subsetting for valid coordinates
+length(events(code))
+# List length after subsetting for valid coordinates
+length(events(code, geo = TRUE))
+# Displaying the first three entries of events with valid coordinates
+str(events(code, geo = TRUE)[1:3])
+```
+
+# 6. Contacts of an item
+This function downloads the contacts of a specified item as displayed in https://registry.o2a-data.de/. For further explanation of the O2A service Registry please see the documentation at https://o2a-data.de/documentation.
+
+`code` is the item `urn` or `ID` number from Registry.
+
+***
+Here we use the vessel Mya II as an example. 
+```{r contacts run}
+code <- 456
+
+str(contacts(code))
+```
+
+You could also pass the `urn` to the function and get the same result.
+```{r contacts run alt, results = "hide"}
+code <- "vessel:mya_ii"
+
+str(contacts(code))
+```
+
+# 7. Subitems of an item
+This function requests the subitems (a.k.a. children) of an item. These are the scientific devices, sensors, or generally called "items" that are associated with the specified (parent)item. For further explanation of the O2A service Registry please see the documentation at https://o2a-data.de/documentation.
+
+`code` is the item `urn` or `ID` number from Registry.
+
+***
+Here we use the Scanmar Fishnet Echo Sounders from Heincke as an example.
+```{r subitems run}
+code <- 9215
+
+str(subitems(code))
+```
+
+You could also pass the `urn` to the function and get the same result.
+```{r subitems run alt}
+code <- "vessel:heincke:netsounders"
+
+str(subitems(code))
+```
+<!-- EOF -->
