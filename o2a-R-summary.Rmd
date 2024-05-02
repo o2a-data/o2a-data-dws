@@ -6,7 +6,7 @@ output: github_document
 ---
 
 # Packages
-This example code utilizes the following libraries. Make sure these packages are installed e.g. with the `install.packages()` function.
+This example code utilizes the following libraries from the o2a.R script. Make sure these packages are installed e.g. with the `install.packages()` function.
 
 ```{r packages}
 source('o2a.R')
@@ -129,6 +129,7 @@ str(events(code, geo = TRUE)[1:3])
 
 # 6. Contacts of an item
 This function downloads the contacts of a specified item as displayed in https://registry.o2a-data.de/. For further explanation of the O2A service Registry please see the documentation at https://o2a-data.de/documentation.
+Note, that this function cannot access inherited contacts (the contacts of the parent item). Thus, an item can have no contacts. In this case the function returns an empty list.
 
 `code` is the item `urn` or `ID` number from Registry.
 
