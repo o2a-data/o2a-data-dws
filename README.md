@@ -20,6 +20,7 @@ These services are:
 | [o2a.R](o2a.R)           | Set of basic functions to access and analyze some of the O2A services in [R](https://www.r-project.org/).   |
 | [o2a.py](o2a.py)         | Set of basic functions to access and analyze some of the O2A services in [python](https://www.python.org/). |
 | [o2a-py-summary.ipynb]() | Short summary and showcase of `o2a.py` as jupyter-notebook.                                                 |
+| [o2a-R-summary.Rmd]()    | Short summary and showcase of `o2a.R` as Rmarkdown-file.                                                    |
 
 
 
