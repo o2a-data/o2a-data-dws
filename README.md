@@ -21,7 +21,16 @@ These services are:
 | [o2a.py](o2a.py)         | Set of basic functions to access and analyze some of the O2A services in [python](https://www.python.org/). |
 | [o2a-py-summary.ipynb]() | Short summary and showcase of `o2a.py` as jupyter-notebook.                                                 |
 | [o2a-R-summary.Rmd]()    | Short summary and showcase of `o2a.R` as Rmarkdown-file.                                                    |
+| [o2aAuth.py](o2aAuth.py) | class to authenticate at registry                                                                           |
 
+Example of a local config.json to authenticate. Token is generated at [o2a-data.de/](https://o2a-data.de/).
+
+``` json
+  { 
+  "email": "yourEmail@yourProvider.TLD", 
+  "token": "ahxi5aeg0ahngohboy8odaibu9he4phoex4aecai9phahquoh4mu4geixeo7evewier"
+  }
+```
 
 
 <p align="right"><a href="#top">&#x25B2; back to top</a></p>
