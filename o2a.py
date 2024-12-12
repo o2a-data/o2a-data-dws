@@ -42,8 +42,11 @@ class o2a:
         print(
             "- x.events: full json list of events \ninput: item ID or urn, optional 'geo = True' only events with coordinates are put out"
         )
-        print("- x.subitems: output of all subitems \ninput: item ID or urn ")
-        print("- x.parameters: gives all parameters per item \ninput: item ID or urn ")
+        print("- x.subitems: output of all subitems \ninput: item ID or urn")
+        print("- x.parameters: gives all parameters per item \ninput: item ID or urn")
+        print(
+            "- x.resources: return list of available resources\ninput: item ID or urn"
+        )
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
     def _download(self, url):
@@ -320,7 +323,41 @@ class o2a:
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
 
+    def resources(self, code):
+        """
+        retrieve resources of item
+        :code: item unique resource number (urn) or ID
+        """
+        if type(code) == str:
+            url = self.REGISTRY + "/items?where=code=LIKE=" + code
+            j = self._download(url)["records"][0]
+        elif type(code) == int:
+            url = self.REGISTRY + "/items/" + str(code)
+            j = self._download(url)
+        else:
+            raise Exception("provide item urn or item ID")
 
-# import sys
-# sys.exit()
+        ## ITEM resources
+        url = self.REGISTRY + "/items/" + str(j["id"]) + "/resources"
+        k = self._download(url)["records"]
+
+        resourceIds = [i["id"] for i in k]
+        ##
+        c = []
+        for i in resourceIds:
+            url = self.REGISTRY + "/items/" + str(j["id"]) + "/resources/" + str(i)
+            l = self._download(url)
+            d = {}
+            d["name"] = l["name"]
+            d["type"] = l["type"]["generalName"]
+            d["description"] = l["description"] if "description" in l.keys() else ""
+            d["link"] = l["linkage"] if "linkage" in l.keys() else url + "/payload"
+
+            c.append(d)
+
+        return c
+
+    ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
+
+
 ## eof
