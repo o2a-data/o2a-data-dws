@@ -9,10 +9,10 @@ import json
 class o2a:
     """
     This script abstracts access to metadata stored in
-    https://registry.o2a-data.de and data available via the data web service
-    (https://dashboard.awi.de/data/). Have a look to the documentation at
+    https://registry.o2a-data.de and data available via the data streams
+    (https://ingest.o2a-data.de/streams). Have a look to the documentation at
     https://o2a-data.de/documentation and the API descriptions
-    https://registry.o2a-data.de/api/ and https://dashboard.awi.de/data/api/.
+    https://registry.o2a-data.de/api/ and https://ingest.o2a-data.de/api/.
     """
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
@@ -26,12 +26,12 @@ class o2a:
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
     def help(self):
         """ """
-        print("**DWS**")
+        print("**STREAMS**")
         print(
-            "- x.items: retrieves info about a specific item if 'code'\n (item urn) is submitted otherwise it gives a de facto unmanagable\n data stream to std out. Info is derived from the data web service."
+            "- x.items: retrieves info about a specific item if 'code'\n (item urn) is submitted otherwise it gives a de facto unmanagable\n data stream to std out. Info is derived from the data streams."
         )
         print(
-            "- x.downloadDataFromDWS: retrieves data from data web service \ninput: i) string of parameter urns, multiple urns can be combined by comma, ii) beginning date (YYYY-MM-DDTHH:MM:SS), iii) end date (YYYY-MM-DDTHH:MM:SS), iv) aggregate level (second, minute, hour, day), defaults to 'hour', iv) aggregate function (min, max, mean, median, count, std), does not apply for 'seconds', defaults to mean"
+            "- x.downloadDataFromStreams: retrieves data from data streams \ninput: i) string of parameter urns, multiple urns can be combined by comma, ii) beginning date (YYYY-MM-DDTHH:MM:SS), iii) end date (YYYY-MM-DDTHH:MM:SS), iv) aggregate level (SECOND, MINUTE, HOUR, DAY), defaults to 'HOUR', iv) aggregate function (e.g. MIN, MAX, MEAN, MEDIAN, N, STDDEV), does not apply for 'SECONDS', defaults to mean"
         )
         print("")
         print("**REGISTRY**")
@@ -74,19 +74,18 @@ class o2a:
             return True
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-    def items(self, pattern: str = None):
+    def items(self, pattern: str):
         """
-        Loads availble sensors from the data service. The optional
-        pattern allows * wildcards and can be used to search for sensors.
-        See https://dashboard.awi.de/data/ for documentation.
+        Loads availble sensors from the data service. 'pattern' 
+        allows * wildcards and can be used to search for items.
+        See https://ingest.o2a-data.de/api/ for documentation.
         :pattern: is parameter urn(s)
         """
-        url = self.DWS + "/sensors"
+        url = self.STREAMS + "/streams?where=code=LIKE="
         if pattern != None:
-            url += "?pattern=" + pattern
-
-        j = self._download(url)
-        return j
+            return(self._download(url + pattern))
+        else:
+            raise Exception("xxx")
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
     def downloadDataFromStreams(
@@ -350,10 +349,6 @@ class o2a:
             c.append(d)
 
         return c
-
-    ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-
-
 
 
 
