@@ -90,7 +90,7 @@ class o2a:
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
     def downloadDataFromStreams(
         self,
-        items,
+        items: list,
         begin: date,
         end: date,
         aggregate: str = "HOUR",
@@ -115,18 +115,25 @@ class o2a:
         if end == None:
             raise Exception("datetimeMax must be defined.")
 
-        if items.count(",") > 0:
-            items = items.replace(" ", "").replace(",", "&scodes=")
+        if type(items) is list:
+            item = ""
+            for i in items:
+                item += "&codes=" + i
+            item = item[1:len(item)]
+        else:
+            raise Exception("submit parameters as list")
 
         secondTest = self._testAggregate("SECOND", aggregate)
         minTest = self._testAggregate("MINUTE", aggregate)
         hourTest = self._testAggregate("HOUR", aggregate)
         dayTest = self._testAggregate("DAY", aggregate)
 
+        print(hourTest)
+        
         baseLink = (
             self.STREAMS
-            + "/data?codes="
-            + items
+            + "/data?"
+            + item
             + "&datetimeMin="
             + str(begin)
             + "&datetimeMax="
@@ -165,6 +172,7 @@ class o2a:
             raise Exception("Error loading data.".format(response.reason))
         
         # build the data frame
+        print(response.text)
         df = pd.read_csv(StringIO(response.text), sep="\t")
         df["datetime"] = pd.to_datetime(df["datetime"])
         return df
@@ -349,8 +357,6 @@ class o2a:
             c.append(d)
 
         return c
-
-
 
 
 ## eof
