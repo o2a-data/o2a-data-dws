@@ -21,7 +21,7 @@ class o2a:
         lorem
         """
         self.REGISTRY = "https://registry.o2a-data.de/rest/v2"
-        self.DWS = "https://dashboard.awi.de/data/rest"
+        self.STREAMS = "https://ingest.o2a-data.de/rest"
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
     def help(self):
@@ -67,7 +67,7 @@ class o2a:
         :string: string to be tested
         """
         p = "[" + pattern + "]\\" + "w+"
-        a = re.match(p, string.lower())
+        a = re.match(p, string.upper())
         if a is None:
             return False
         else:
@@ -89,48 +89,48 @@ class o2a:
         return j
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-    def downloadDataFromDWS(
+    def downloadDataFromStreams(
         self,
         items,
         begin: date,
         end: date,
-        aggregate: str = "hour",
-        aggregateFunctions: str = "mean",
+        aggregate: str = "HOUR",
+        aggregateFunctions: str = "MEAN",
     ):
         """
         Loads data from the data service for given sensors
         in the given time range and selected aggregate.
-        See https://dashboard.awi.de/data/ for documentation.
+        See https://ingest.o2a-data.de/api/ for documentation.
         :items: parameter urn(s)
         :begin: YYYY-MM-DDTHH:MM:SS string
         :end: YYYY-MM-DDTHH:MM:SS string
         :aggregate: second, minute, hour, day
-        :aggregateFunctions: min, max, mean, median, std, count, ...
+        :aggregateFunctions: MIN, Q25, Q75, MAX, MEAN, MEDIAN, STDDEV, VAR, N, SUM, ...
         """
         if items == None or len(items) == 0:
             raise Exception("Item(s) must be defined.")
 
         if begin == None:
-            raise Exception("Begin timestamp must be defined.")
+            raise Exception("datetimeMin must be defined.")
 
         if end == None:
-            raise Exception("End timestamp must be defined.")
+            raise Exception("datetimeMax must be defined.")
 
         if items.count(",") > 0:
-            items = items.replace(" ", "").replace(",", "&sensors=")
+            items = items.replace(" ", "").replace(",", "&scodes=")
 
-        secondTest = self._testAggregate("sec", aggregate)
-        minTest = self._testAggregate("min", aggregate)
-        hourTest = self._testAggregate("hour", aggregate)
-        dayTest = self._testAggregate("day", aggregate)
+        secondTest = self._testAggregate("SECOND", aggregate)
+        minTest = self._testAggregate("MINUTE", aggregate)
+        hourTest = self._testAggregate("HOUR", aggregate)
+        dayTest = self._testAggregate("DAY", aggregate)
 
         baseLink = (
-            self.DWS
-            + "/data?sensors="
+            self.STREAMS
+            + "/data?codes="
             + items
-            + "&beginDate="
+            + "&datetimeMin="
             + str(begin)
-            + "&endDate="
+            + "&datetimeMax="
             + str(end)
             + "&aggregate="
         )
@@ -138,38 +138,33 @@ class o2a:
         if secondTest is True:
             response = requests.get(
                 baseLink
-                + "second&streamit=true&"
-                + "withQualityFlags=false&withLogicalCode=false"
+                + "SECOND" 
             )
 
         if minTest is True:
             response = requests.get(
                 baseLink
-                + "minute&aggregateFunctions="
+                + "MINUTE&aggregateFunctions="
                 + aggregateFunctions
-                + "&streamit=true&withQualityFlags=false&withLogicalCode=false"
             )
 
         if hourTest is True:
             response = requests.get(
                 baseLink
-                + "hour&aggregateFunctions="
+                + "HOUR&aggregateFunctions="
                 + aggregateFunctions
-                + "&streamit=true&withQualityFlags=false&withLogicalCode=false"
             )
 
         if dayTest is True:
             response = requests.get(
                 baseLink
-                + "day&aggregateFunctions="
+                + "DAY&aggregateFunctions="
                 + aggregateFunctions
-                + "&streamit=true&withQualityFlags=false&withLogicalCode=false"
             )
 
-        ##+ '&limit=20' # <-------------------------------------------- ??!?
         if response.status_code != 200:
             raise Exception("Error loading data.".format(response.reason))
-
+        
         # build the data frame
         df = pd.read_csv(StringIO(response.text), sep="\t")
         df["datetime"] = pd.to_datetime(df["datetime"])
@@ -322,7 +317,6 @@ class o2a:
         return j
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-
     def resources(self, code):
         """
         retrieve resources of item
@@ -358,6 +352,10 @@ class o2a:
         return c
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
+
+
+
+
 
 
 ## eof
