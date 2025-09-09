@@ -172,7 +172,6 @@ class o2a:
             raise Exception("Error loading data.".format(response.reason))
         
         # build the data frame
-        print(response.text)
         df = pd.read_csv(StringIO(response.text), sep="\t")
         df["datetime"] = pd.to_datetime(df["datetime"])
         return df
@@ -242,9 +241,10 @@ class o2a:
                 self.REGISTRY
                 + "/items/"
                 + str(code)
-                + "/events?where=latitude>=-90 and latitude<=90 and"
-                + "longitude>=-180 and longitude<=180"
+                + "/events?where=latitude>=-90;latitude<=90;"
+                + "longitude>=-180;longitude<=180"
             )
+            print(url)
         else:
             url = self.REGISTRY + "/items/" + str(code) + "/events"
 
@@ -357,6 +357,12 @@ class o2a:
             c.append(d)
 
         return c
+
+
+
+
+
+
 
 
 ## eof
