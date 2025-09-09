@@ -2,9 +2,11 @@
 library("httr2")
 library("jsonlite")
 library("readr")
+library("tidyverse")
+library("janitor")
 
 REGISTRY <- "https://registry.o2a-data.de/rest/v2"
-DWS <- "https://dashboard.awi.de/data/rest"
+DWS <- "https://ingest.o2a-data.de/rest"
 
 download <- function(url) {
     response <- req_perform(request(url))
@@ -16,13 +18,13 @@ download <- function(url) {
 }
 
 ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-testAggregate <- function(pattern, string) {
-    ## :pattern: aggretation pattern to check on
-    ## :string: string to be tested
-    p <- paste0("[", pattern, "]\\w+")
-    a <- grepl(p, string, ignore.case = TRUE)
-    return(a)
-}
+# testAggregate <- function(pattern, string) {
+#     ## :pattern: aggretation pattern to check on
+#     ## :string: string to be tested
+#     p <- paste0("[", pattern, "]\\w+")
+#     a <- grepl(p, string, ignore.case = TRUE)
+#     return(a)
+# }
 
 ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
 items <- function(pattern = NULL) {
@@ -30,108 +32,91 @@ items <- function(pattern = NULL) {
     ## pattern allows * wildcards and can be used to search for sensors.
     ## See https://dashboard.awi.de/data/ for documentation.
     ## :pattern: is parameter urn(s)
-    url <- paste0(DWS, "/sensors")
+    url <- paste0(DWS, "/streams")
     if (!is.null(pattern)) {
-        url <- paste0(url, "?pattern=", pattern)
+        url <- paste0(url, "?where=code=LIKE=", pattern)
     }
     itemsJson <- download(url)
-    return(itemsJson)
+    items_df <- itemsJson$records |> 
+        tibble(data = _) |> 
+        unnest_wider(data,
+                 names_repair = "unique")
+    return(items_df)
 }
 
 
 ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-downloadDataFromDWS <- function(itemUrns,
-                                    begin,
-                                    end,
-                                    aggregate,
-                                    aggregateFunctions) {
-    ## Loads data from the data service for given sensors
-    ## in the given time range and selected aggregate.
-    ## See https://dashboard.awi.de/data/ for documentation.
-    ## :items: parameter urn(s)
-    ## :begin: YYYY-MM-DDTHH:MM:SS string
-    ## :end: YYYY-MM-DDTHH:MM:SS string
-    ## :aggregate: second, minute, hour, day
-    ## :aggregateFunctions: min, max, mean, median, std, count
-    if (is.null(itemUrns) || length(itemUrns) == 0) {
-        stop("Item(s) must be defined.")
+# does not yet allow several aggregateFunctions
+# requires begin & end contrary to Swagger API
+
+downloadDataFromDWS <- function(itemUrns, 
+                        begin,
+                        end,
+                        aggregate = NULL,
+                        aggregateFunctions = NULL) {
+  
+  ## :items: parameter urn(s)
+  ## :begin: YYYY-MM-DDTHH:MM:SS string
+  ## :end: YYYY-MM-DDTHH:MM:SS string
+  ## :aggregate: SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, YEAR 
+  ##             - default (NULL) is HOUR
+  ## :aggregateFunctions: MIN, Q25, MEAN, MEDIAN, Q75, MAX, STDDEV, VAR, N, SUM
+  ##            - default (NULL) is MEAN
+  
+  # input test
+  allowedAggregates <- c("SECOND", "MINUTE", "HOUR", "DAY", "WEEK", "MONTH", "YEAR")
+  allowedAggFuncs   <- c("MIN", "Q25", "MEAN", "MEDIAN", "Q75", 
+                         "MAX", "STDDEV", "VAR", "N", "SUM")
+  
+  # validate aggregate
+  if (!is.null(aggregate)) {
+    # normalize to uppercase to be user-friendly
+    aggregate <- toupper(aggregate)
+    
+    if (!(aggregate %in% allowedAggregates)) {
+      stop(sprintf(
+        "Invalid value for 'aggregate': %s. Allowed values are: %s",
+        aggregate,
+        paste(allowedAggregates, collapse = ", ")
+      ))
     }
-    if (is.null(begin)) {
-        stop("Begin timestamp must be defined.")
+  }
+  
+  # validate aggregate function
+  if (!is.null(aggregateFunctions)) {
+    aggregateFunctions <- toupper(aggregateFunctions)
+    invalidFuncs <- setdiff(aggregateFunctions, allowedAggFuncs)
+    if (length(invalidFuncs) > 0) {
+      stop(sprintf(
+        "Invalid aggregate function(s): %s. Allowed values are: %s",
+        paste(invalidFuncs, collapse = ", "),
+        paste(allowedAggFuncs, collapse = ", ")
+      ))
     }
-    if (is.null(end)) {
-        stop("End timestamp must be defined.")
-    }
-    if (grepl(",", itemUrns)) {
-        itemUrns <- gsub(" ", "", itemUrns)
-        itemUrns <- gsub(",", "&sensors=", itemUrns)
-    }
-    secondTest <- testAggregate("sec", aggregate)
-    minTest <- testAggregate("min", aggregate)
-    hourTest <- testAggregate("hour", aggregate)
-    dayTest <- testAggregate("day", aggregate)
-    ##
-    baseLink <- paste0(
-        DWS,
-        "/data?sensors=",
-        itemUrns,
-        "&beginDate=",
-        as.character(begin),
-        "&endDate=",
-        as.character(end),
-        "&aggregate="
-    )
-    if (secondTest == TRUE) {
-        response <- req_perform(
-            request(
-                paste0(baseLink,
-                "second&streamit=true&withQualityFlags=false",
-                "&withLogicalCode=false")
-            )
-        )
-    }
-    if (minTest == TRUE) {
-        response <- req_perform(
-            request(
-                paste0(
-                baseLink,
-                "minute&aggregateFunctions=",
-                aggregateFunctions,
-                "&streamit=true&withQualityFlags=false",
-                "&withLogicalCode=false")
-            )
-        )
-    }
-    if (hourTest == TRUE) {
-        response <- req_perform(
-            request(
-                paste0(
-                baseLink,
-                "hour&aggregateFunctions=",
-                aggregateFunctions,
-                "&streamit=true&withQualityFlags=false",
-                "&withLogicalCode=false")
-            )
-        )
-    }
-    if (dayTest == TRUE) {
-        response <- req_perform(
-            request(
-                paste0(
-                baseLink,
-                "day&aggregateFunctions=",
-                aggregateFunctions,
-                "&streamit=true&withQualityFlags=false&withLogicalCode=false")
-            )
-        )
-    }
-    if (response$status_code != 200) {
-        stop(sprintf("Error loading data: %s", response$reason))
-    }
-    ##
-    respBody <- resp_body_string(response)
-    df <- read.table(text = respBody, header = TRUE, sep = "\t")
-    return(df)
+  }
+  
+  # url build 
+  paste(itemUrns, collapse = "&codes=") |>
+    (\(.) paste0(
+      "https://dashboard.awi.de/data/rest/data?codes=",
+      #"https://ingest.o2a-data.de/rest/data?codes=",
+      .,
+      "&datetimeMin=", begin,
+      "&datetimeMax=", end,
+      if (!is.null(aggregate)) paste0("&aggregate=", aggregate) else "",
+      if (!is.null(aggregateFunctions)) 
+        paste0("&aggregateFunctions=", paste(aggregateFunctions, collapse = ",")) 
+      else "",
+      "&streamit=true"
+      # &withQualityFlags=false&withLogicalCode=false"
+    ))() |>
+    request() |>
+    req_perform() |>
+    resp_body_string() |>
+    (\(.) read.table(text = ., header = TRUE, sep = "\t"))() |>
+    transform(datetime = as.POSIXct(datetime, format = "%Y-%m-%dT%H:%M:%OS", tz = "UTC")) |>
+    clean_names()
+  
 }
 
 
