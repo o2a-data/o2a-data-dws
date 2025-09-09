@@ -9,10 +9,10 @@ import json
 class o2a:
     """
     This script abstracts access to metadata stored in
-    https://registry.o2a-data.de and data available via the data web service
-    (https://dashboard.awi.de/data/). Have a look to the documentation at
+    https://registry.o2a-data.de and data available via the data streams
+    (https://ingest.o2a-data.de/streams). Have a look to the documentation at
     https://o2a-data.de/documentation and the API descriptions
-    https://registry.o2a-data.de/api/ and https://dashboard.awi.de/data/api/.
+    https://registry.o2a-data.de/api/ and https://ingest.o2a-data.de/api/.
     """
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
@@ -21,17 +21,17 @@ class o2a:
         lorem
         """
         self.REGISTRY = "https://registry.o2a-data.de/rest/v2"
-        self.DWS = "https://dashboard.awi.de/data/rest"
+        self.STREAMS = "https://ingest.o2a-data.de/rest"
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
     def help(self):
         """ """
-        print("**DWS**")
+        print("**STREAMS**")
         print(
-            "- x.items: retrieves info about a specific item if 'code'\n (item urn) is submitted otherwise it gives a de facto unmanagable\n data stream to std out. Info is derived from the data web service."
+            "- x.items: retrieves info about a specific item if 'code'\n (item urn) is submitted otherwise it gives a de facto unmanagable\n data stream to std out. Info is derived from the data streams."
         )
         print(
-            "- x.downloadDataFromDWS: retrieves data from data web service \ninput: i) string of parameter urns, multiple urns can be combined by comma, ii) beginning date (YYYY-MM-DDTHH:MM:SS), iii) end date (YYYY-MM-DDTHH:MM:SS), iv) aggregate level (second, minute, hour, day), defaults to 'hour', iv) aggregate function (min, max, mean, median, count, std), does not apply for 'seconds', defaults to mean"
+            "- x.downloadDataFromStreams: retrieves data from data streams \ninput: i) string of parameter urns, multiple urns can be combined by comma, ii) beginning date (YYYY-MM-DDTHH:MM:SS), iii) end date (YYYY-MM-DDTHH:MM:SS), iv) aggregate level (SECOND, MINUTE, HOUR, DAY), defaults to 'HOUR', iv) aggregate function (e.g. MIN, MAX, MEAN, MEDIAN, N, STDDEV), does not apply for 'SECONDS', defaults to mean"
         )
         print("")
         print("**REGISTRY**")
@@ -67,70 +67,76 @@ class o2a:
         :string: string to be tested
         """
         p = "[" + pattern + "]\\" + "w+"
-        a = re.match(p, string.lower())
+        a = re.match(p, string.upper())
         if a is None:
             return False
         else:
             return True
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-    def items(self, pattern: str = None):
+    def items(self, pattern: str):
         """
-        Loads availble sensors from the data service. The optional
-        pattern allows * wildcards and can be used to search for sensors.
-        See https://dashboard.awi.de/data/ for documentation.
+        Loads availble sensors from the data service. 'pattern' 
+        allows * wildcards and can be used to search for items.
+        See https://ingest.o2a-data.de/api/ for documentation.
         :pattern: is parameter urn(s)
         """
-        url = self.DWS + "/sensors"
+        url = self.STREAMS + "/streams?where=code=LIKE="
         if pattern != None:
-            url += "?pattern=" + pattern
-
-        j = self._download(url)
-        return j
+            return(self._download(url + pattern))
+        else:
+            raise Exception("xxx")
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-    def downloadDataFromDWS(
+    def downloadDataFromStreams(
         self,
-        items,
+        items: list,
         begin: date,
         end: date,
-        aggregate: str = "hour",
-        aggregateFunctions: str = "mean",
+        aggregate: str = "HOUR",
+        aggregateFunctions: str = "MEAN",
     ):
         """
         Loads data from the data service for given sensors
         in the given time range and selected aggregate.
-        See https://dashboard.awi.de/data/ for documentation.
+        See https://ingest.o2a-data.de/api/ for documentation.
         :items: parameter urn(s)
         :begin: YYYY-MM-DDTHH:MM:SS string
         :end: YYYY-MM-DDTHH:MM:SS string
         :aggregate: second, minute, hour, day
-        :aggregateFunctions: min, max, mean, median, std, count, ...
+        :aggregateFunctions: MIN, Q25, Q75, MAX, MEAN, MEDIAN, STDDEV, VAR, N, SUM, ...
         """
         if items == None or len(items) == 0:
             raise Exception("Item(s) must be defined.")
 
         if begin == None:
-            raise Exception("Begin timestamp must be defined.")
+            raise Exception("datetimeMin must be defined.")
 
         if end == None:
-            raise Exception("End timestamp must be defined.")
+            raise Exception("datetimeMax must be defined.")
 
-        if items.count(",") > 0:
-            items = items.replace(" ", "").replace(",", "&sensors=")
+        if type(items) is list:
+            item = ""
+            for i in items:
+                item += "&codes=" + i
+            item = item[1:len(item)]
+        else:
+            raise Exception("submit parameters as list")
 
-        secondTest = self._testAggregate("sec", aggregate)
-        minTest = self._testAggregate("min", aggregate)
-        hourTest = self._testAggregate("hour", aggregate)
-        dayTest = self._testAggregate("day", aggregate)
+        secondTest = self._testAggregate("SECOND", aggregate)
+        minTest = self._testAggregate("MINUTE", aggregate)
+        hourTest = self._testAggregate("HOUR", aggregate)
+        dayTest = self._testAggregate("DAY", aggregate)
 
+        print(hourTest)
+        
         baseLink = (
-            self.DWS
-            + "/data?sensors="
-            + items
-            + "&beginDate="
+            self.STREAMS
+            + "/data?"
+            + item
+            + "&datetimeMin="
             + str(begin)
-            + "&endDate="
+            + "&datetimeMax="
             + str(end)
             + "&aggregate="
         )
@@ -138,38 +144,33 @@ class o2a:
         if secondTest is True:
             response = requests.get(
                 baseLink
-                + "second&streamit=true&"
-                + "withQualityFlags=false&withLogicalCode=false"
+                + "SECOND" 
             )
 
         if minTest is True:
             response = requests.get(
                 baseLink
-                + "minute&aggregateFunctions="
+                + "MINUTE&aggregateFunctions="
                 + aggregateFunctions
-                + "&streamit=true&withQualityFlags=false&withLogicalCode=false"
             )
 
         if hourTest is True:
             response = requests.get(
                 baseLink
-                + "hour&aggregateFunctions="
+                + "HOUR&aggregateFunctions="
                 + aggregateFunctions
-                + "&streamit=true&withQualityFlags=false&withLogicalCode=false"
             )
 
         if dayTest is True:
             response = requests.get(
                 baseLink
-                + "day&aggregateFunctions="
+                + "DAY&aggregateFunctions="
                 + aggregateFunctions
-                + "&streamit=true&withQualityFlags=false&withLogicalCode=false"
             )
 
-        ##+ '&limit=20' # <-------------------------------------------- ??!?
         if response.status_code != 200:
             raise Exception("Error loading data.".format(response.reason))
-
+        
         # build the data frame
         df = pd.read_csv(StringIO(response.text), sep="\t")
         df["datetime"] = pd.to_datetime(df["datetime"])
@@ -240,9 +241,10 @@ class o2a:
                 self.REGISTRY
                 + "/items/"
                 + str(code)
-                + "/events?where=latitude>=-90 and latitude<=90 and"
-                + "longitude>=-180 and longitude<=180"
+                + "/events?where=latitude>=-90;latitude<=90;"
+                + "longitude>=-180;longitude<=180"
             )
+            print(url)
         else:
             url = self.REGISTRY + "/items/" + str(code) + "/events"
 
@@ -322,7 +324,6 @@ class o2a:
         return j
 
     ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
-
     def resources(self, code):
         """
         retrieve resources of item
@@ -357,7 +358,11 @@ class o2a:
 
         return c
 
-    ## ---------------------------  ¬!"£$%^&*()_+ --------------------------- ##
+
+
+
+
+
 
 
 ## eof
